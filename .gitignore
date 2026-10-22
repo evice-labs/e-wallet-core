@@ -1,0 +1,9 @@
+build/
+result
+generated_code/
+.lock*
+target/
+.cache/
+*.pyc
+scratch/
+tests/*_runner
