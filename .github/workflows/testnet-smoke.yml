@@ -1,0 +1,36 @@
+name: Testnet Smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1' # Weekly Monday 06:00 UTC
+
+jobs:
+  smoke-test:
+    name: Testnet 0.4 Integration Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential nlohmann-json3-dev
+
+      - name: Build Integration Test Runner
+        run: |
+          g++ -std=c++20 \
+            tests/test_e_wallet_core.cpp \
+            src/e_wallet_core_impl.cpp \
+            src/wallet_engine.cpp \
+            src/wallet_accounts.cpp \
+            -Isrc \
+            -Ilib \
+            -Llib \
+            -llez_wallet_sdk \
+            -Wl,-rpath,lib \
+            -o tests/test_e_wallet_core_runner
+
+      - name: Run Testnet Smoke Validation
+        run: |
+          ./tests/test_e_wallet_core_runner
