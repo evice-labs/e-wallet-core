@@ -58,6 +58,16 @@ void test_uninitialized_guard() {
     auto j4 = json::parse(res4);
     assert(j4["ok"] == false);
 
+    // 5. Identity guard
+    assert(json::parse(wallet.getIdentityCommitment("sess_1"))["ok"] == false);
+    assert(json::parse(wallet.deriveScopedNullifier("sess_1", "scope_1"))["ok"] == false);
+
+    // 6. Name resolution guard
+    assert(json::parse(wallet.resolveName("sess_1", "alice.lez"))["ok"] == false);
+
+    // 7. Contract propose guard
+    assert(json::parse(wallet.proposeTransaction("sess_1", "[\"acc_1\"]", "0102", "desc"))["ok"] == false);
+
     std::cout << "  ✓ All uninitialized guards passed\n";
 }
 
@@ -278,12 +288,153 @@ void test_transfers_and_approvals() {
     std::cout << "  ✓ Transfers, interactive approvals, and effect simulation passed\n";
 }
 
+void test_identity_contracts_and_names() {
+    std::cout << "[Test 5] Testing identity accountability, LNS domain resolution, and smart contracts...\n";
+
+    std::string testDir = "/tmp/test_wallet_core_" + std::to_string(time(nullptr)) + "_4";
+    std::filesystem::create_directories(testDir);
+
+    EWalletCoreImpl wallet;
+    assert(json::parse(wallet.initEngine(testDir, "testpass123"))["ok"] == true);
+    assert(json::parse(wallet.createWallet("testpass123"))["ok"] == true);
+
+    // Create an account to use in mentions
+    std::string accRes = wallet.createPublicAccount("alice");
+    auto accJson = json::parse(accRes);
+    assert(accJson["ok"] == true);
+    std::string aliceId = accJson["account_id"].get<std::string>();
+
+    // Establish dApp session
+    std::string connRes = wallet.connectDApp("test_identity_dapp", 1);
+    auto connJson = json::parse(connRes);
+    assert(connJson["ok"] == true);
+    std::string sessId = connJson["session_id"].get<std::string>();
+
+    // --- Sub-test A: Identity Accountability Grants & Commitment ---
+    // Unauthorized access before IdentityRead grant
+    std::string unauthComm = wallet.getIdentityCommitment(sessId);
+    assert(json::parse(unauthComm)["ok"] == false);
+
+    // Grant IdentityRead permission
+    std::string grantReadRes = wallet.requestIdentityAccess(sessId, "IdentityRead");
+    assert(json::parse(grantReadRes)["ok"] == true);
+
+    // Get identity commitment as hex
+    std::string commRes = wallet.getIdentityCommitment(sessId);
+    auto commJson = json::parse(commRes);
+    assert(commJson["ok"] == true);
+    assert(commJson.contains("commitment"));
+    std::string commHex = commJson["commitment"].get<std::string>();
+    assert(commHex.length() == 64);
+    std::cout << "  ✓ Identity commitment (hex): " << commHex.substr(0, 16) << "...\n";
+
+    // Get identity commitment as raw bytes
+    std::string commBytesRes = wallet.getIdentityCommitmentBytes(sessId);
+    auto commBytesJson = json::parse(commBytesRes);
+    assert(commBytesJson["ok"] == true);
+    assert(commBytesJson["commitment"] == commHex);
+    assert(commBytesJson["length"] == 32);
+    std::cout << "  ✓ Identity commitment raw bytes match hex representation\n";
+
+    // --- Sub-test B: Scoped Nullifier Derivation ---
+    std::string nullifier1 = wallet.deriveScopedNullifier(sessId, "dao_governance");
+    auto nullJson1 = json::parse(nullifier1);
+    assert(nullJson1["ok"] == true);
+    std::string n1 = nullJson1["nullifier"].get<std::string>();
+    assert(n1.length() == 64);
+
+    // Cross-scope unlinkability
+    std::string nullifier2 = wallet.deriveScopedNullifier(sessId, "dao_voting_room");
+    auto nullJson2 = json::parse(nullifier2);
+    assert(nullJson2["ok"] == true);
+    std::string n2 = nullJson2["nullifier"].get<std::string>();
+    assert(n1 != n2);
+
+    // Within-scope determinism
+    std::string nullifier1_dup = wallet.deriveScopedNullifier(sessId, "dao_governance");
+    assert(json::parse(nullifier1_dup)["nullifier"] == n1);
+    std::cout << "  ✓ Scoped nullifiers are deterministic within-scope and unlinkable cross-scope\n";
+
+    // --- Sub-test C: Identity Attestation & Shamir Registration ---
+    // Attestation requires IdentityPropose grant
+    std::string unauthAttest = wallet.signIdentityAttestation(sessId, "dao_governance", "48656c6c6f");
+    assert(json::parse(unauthAttest)["ok"] == false);
+
+    // Grant IdentityPropose
+    std::string grantPropRes = wallet.requestIdentityAccess(sessId, "IdentityPropose");
+    assert(json::parse(grantPropRes)["ok"] == true);
+
+    // Sign attestation
+    std::string messageHex = "48656c6c6f20576f726c64"; // "Hello World"
+    std::string attestRes = wallet.signIdentityAttestation(sessId, "dao_governance", messageHex);
+    auto attestJson = json::parse(attestRes);
+    assert(attestJson["ok"] == true);
+    assert(attestJson.contains("signature"));
+    assert(attestJson["nullifier"] == n1);
+    std::cout << "  ✓ Identity attestation signed with scoped ZK credential\n";
+
+    // Prepare Shamir registration with 3 trustee nodes and threshold k=2
+    json trusteeNodes = json::array({
+        "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5",
+        "e493dbf1c10d80f3581e4904930b1404cc6c13900ee0758474fa94abe8c4cd13"
+    });
+    std::string regRes = wallet.prepareIdentityRegistration(sessId, "governance_registry", trusteeNodes.dump(), 2);
+    auto regJson = json::parse(regRes);
+    assert(regJson["ok"] == true);
+    assert(regJson["threshold_k"] == 2);
+    assert(regJson["total_m"] == 3);
+    assert(regJson["encrypted_shares"].size() == 3);
+    std::cout << "  ✓ Two-Tier Shamir Secret Sharing identity registration prepared\n";
+
+    // --- Sub-test D: LNS Domain Resolution ---
+    // Invalid format rejection
+    assert(json::parse(wallet.resolveName(sessId, "not-a-domain"))["ok"] == false);
+    assert(json::parse(wallet.resolveName(sessId, "-invalid.lez"))["ok"] == false);
+    assert(json::parse(wallet.resolveName(sessId, "invalid-.lez"))["ok"] == false);
+
+    // Valid format delegation
+    std::string resolveRes = wallet.resolveName(sessId, "alice.lez");
+    auto resolveJson = json::parse(resolveRes);
+    assert(resolveJson.contains("ok"));
+    std::cout << "  ✓ LNS name resolution validated and dispatched\n";
+
+    // --- Sub-test E: Smart Contract Invocations ---
+    // Invalid calldata hex validation
+    assert(json::parse(wallet.proposeTransaction(sessId, "[\"" + aliceId + "\"]", "not_hex", "desc"))["ok"] == false);
+    // Invalid mentions JSON validation
+    assert(json::parse(wallet.proposeTransaction(sessId, "not_json", "01020304", "desc"))["ok"] == false);
+
+    // Grant propose permission for alice
+    assert(json::parse(wallet.grantAccountAccess(sessId, aliceId, "propose"))["ok"] == true);
+
+    // Propose generic contract transaction
+    json mentions = json::array({aliceId});
+    std::string calldataHex = "63616c6c646174615f74657374"; // "calldata_test"
+    std::string propRes = wallet.proposeTransaction(sessId, mentions.dump(), calldataHex, "Execute test smart contract");
+    auto propJson = json::parse(propRes);
+    assert(propJson["ok"] == true);
+    assert(propJson.contains("request_id"));
+    assert(propJson["status"] == "pending_approval");
+    std::string contractReqId = propJson["request_id"].get<std::string>();
+    std::cout << "  ✓ Smart contract transaction proposed with ID: " << contractReqId << "\n";
+
+    // Query status and cancel
+    assert(json::parse(wallet.getRequestStatus(contractReqId))["ok"] == true);
+    assert(json::parse(wallet.cancelRequest(contractReqId))["ok"] == true);
+    std::cout << "  ✓ Smart contract transaction status checked and cancelled\n";
+
+    std::filesystem::remove_all(testDir);
+    std::cout << "  ✓ All Identity, LNS, and Smart Contract tests passed successfully\n";
+}
+
 int main() {
     std::cout << "RUNNING CORE MODULE INTEGRATION TESTS\n";
     test_uninitialized_guard();
     test_engine_lifecycle_and_accounts();
     test_dapp_provider_sessions();
     test_transfers_and_approvals();
+    test_identity_contracts_and_names();
     std::cout << "ALL TESTS PASSED!\n";
     return 0;
 }
