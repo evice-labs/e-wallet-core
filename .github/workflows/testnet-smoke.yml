@@ -2,15 +2,23 @@ name: Testnet Smoke
 
 on:
   workflow_dispatch:
+    inputs:
+      testnet_rpc:
+        description: 'LEZ Sequencer Testnet RPC Endpoint'
+        required: false
+        default: 'https://testnet.lez.logos.co'
   schedule:
     - cron: '0 6 * * 1' # Weekly Monday 06:00 UTC
 
 permissions:
   contents: read
 
+env:
+  LEZ_TESTNET_RPC: ${{ github.event.inputs.testnet_rpc || vars.LEZ_TESTNET_RPC || 'https://testnet.lez.logos.co' }}
+
 jobs:
-  smoke-test:
-    name: Testnet 0.4 Integration Smoke
+  testnet-smoke:
+    name: LEZ Testnet Integration Smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +29,50 @@ jobs:
       - name: Setup Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@v9
 
-      - name: Compile and Run Smoke Integration Tests
+      - name: Verify Live LEZ Testnet Sequencer Connectivity & State
         run: |
-          nix develop --command bash -c "g++ -std=c++20 tests/test_e_wallet_core.cpp src/*.cpp -Isrc -Ilib -I\$LOGOS_CPP_SDK_ROOT/include -Llib -llez_wallet_sdk -lpcsclite -Wl,-rpath,lib -o tests/test_e_wallet_core_runner && ./tests/test_e_wallet_core_runner && rm tests/test_e_wallet_core_runner"
+          echo "Connecting to LEZ Testnet Sequencer at: ${LEZ_TESTNET_RPC}"
+          
+          # 1. Check Sequencer Health
+          HEALTH_RESP=$(curl -s -f -X POST "${LEZ_TESTNET_RPC}" \
+            -H "Content-Type: application/json" \
+            -d '{"jsonrpc":"2.0","method":"checkHealth","params":{},"id":1}')
+          echo "Health response: ${HEALTH_RESP}"
+          
+          # 2. Query Latest Block ID
+          BLOCK_RESP=$(curl -s -f -X POST "${LEZ_TESTNET_RPC}" \
+            -H "Content-Type: application/json" \
+            -d '{"jsonrpc":"2.0","method":"getLastBlockId","params":[],"id":2}')
+          echo "Latest block response: ${BLOCK_RESP}"
+          
+          # 3. Query Fee State & Limits
+          FEE_RESP=$(curl -s -f -X POST "${LEZ_TESTNET_RPC}" \
+            -H "Content-Type: application/json" \
+            -d '{"jsonrpc":"2.0","method":"getFeeState","params":[],"id":3}')
+          echo "Fee state response: ${FEE_RESP}"
+
+      - name: Verify Vendored C-ABI FFI Dynamic Symbols
+        run: |
+          nm -D lib/liblez_wallet_sdk.so | grep -q "lez_wallet_engine_new" || {
+            echo "Error: Required FFI symbols not found in vendored library"
+            exit 1
+          }
+          nm -D lib/liblez_wallet_sdk.so | grep -q "lez_wallet_resolve_name" || {
+            echo "Error: LNS resolver FFI symbol missing"
+            exit 1
+          }
+          nm -D lib/liblez_wallet_sdk.so | grep -q "lez_wallet_request_identity_access" || {
+            echo "Error: Identity FFI symbol missing"
+            exit 1
+          }
+          echo "Vendored C-ABI FFI symbols verified for testnet."
+
+      - name: Build Core Module Package (LIDL, MOC, Plugin)
+        run: |
+          nix build .# --no-link -L
+
+      - name: Execute Full Integration Test Suite on Testnet Target
+        run: |
+          nix develop --command bash -c "g++ -std=c++20 tests/test_e_wallet_core.cpp src/*.cpp \
+            -Isrc -Ilib -I\$LOGOS_CPP_SDK_ROOT/include -Llib -llez_wallet_sdk -lpcsclite \
+            -Wl,-rpath,lib -o tests/test_e_wallet_core_runner && ./tests/test_e_wallet_core_runner && rm tests/test_e_wallet_core_runner"
