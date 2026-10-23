@@ -8,49 +8,9 @@ on:
 permissions:
   contents: read
 
-env:
-  BUILD_TYPE: Release
-
 jobs:
-  native-integration:
-    name: Native Integration Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential nlohmann-json3-dev
-
-      - name: Verify FFI dynamic library headers and symbols
-        run: |
-          nm -D lib/liblez_wallet_sdk.so | grep -q "lez_wallet_engine_new" || {
-            echo "Error: Required FFI symbols not found in vendored library"
-            exit 1
-          }
-          echo "Vendored C-ABI FFI symbols verified."
-
-      - name: Compile Core Module Integration Tests
-        run: |
-          g++ -std=c++20 \
-            tests/test_e_wallet_core.cpp \
-            src/e_wallet_core_impl.cpp \
-            src/wallet_engine.cpp \
-            src/wallet_accounts.cpp \
-            -Isrc \
-            -Ilib \
-            -Llib \
-            -llez_wallet_sdk \
-            -Wl,-rpath,lib \
-            -o tests/test_e_wallet_core_runner
-
-      - name: Execute Integration Test Suite
-        run: |
-          ./tests/test_e_wallet_core_runner
-
-  nix-module-build:
-    name: Nix Module Build
+  build-and-test:
+    name: Nix Build and Integration Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,6 +21,18 @@ jobs:
       - name: Setup Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@v9
 
-      - name: Build Core Module Package
+      - name: Verify FFI dynamic library headers and symbols
+        run: |
+          nm -D lib/liblez_wallet_sdk.so | grep -q "lez_wallet_engine_new" || {
+            echo "Error: Required FFI symbols not found in vendored library"
+            exit 1
+          }
+          echo "Vendored C-ABI FFI symbols verified."
+
+      - name: Build Core Module Package (LIDL, MOC, Plugin)
         run: |
           nix build .# --no-link -L
+
+      - name: Compile and Execute Integration Test Suite
+        run: |
+          nix develop --command bash -c "g++ -std=c++20 tests/test_e_wallet_core.cpp src/*.cpp -Isrc -Ilib -I\$LOGOS_CPP_SDK_ROOT/include -Llib -llez_wallet_sdk -lpcsclite -Wl,-rpath,lib -o tests/test_e_wallet_core_runner && ./tests/test_e_wallet_core_runner && rm tests/test_e_wallet_core_runner"
