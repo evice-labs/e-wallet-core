@@ -15,10 +15,12 @@
   "nix": {
     "packages": {
       "build": [
-        "nlohmann_json"
+        "nlohmann_json",
+        "pcsclite"
       ],
       "runtime": [
-        "nlohmann_json"
+        "nlohmann_json",
+        "pcsclite"
       ]
     },
     "external_libraries": [
