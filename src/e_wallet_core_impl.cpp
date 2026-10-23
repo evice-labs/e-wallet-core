@@ -1,6 +1,9 @@
 #include "e_wallet_core_impl.h"
 #include "wallet_engine.h"
 #include "wallet_accounts.h"
+#include "wallet_transfers.h"
+#include "wallet_sessions.h"
+#include "wallet_approval.h"
 #include "wallet_helpers.h"
 #include <iostream>
 
@@ -20,7 +23,6 @@ EWalletCoreImpl::~EWalletCoreImpl()
 void EWalletCoreImpl::onContextReady()
 {
     // Context lifecycle hook called when host is ready.
-    // Basecamp modules can auto-initialize or await explicit initEngine() calls.
     std::cout << "[e-wallet-core] Module context ready." << std::endl;
 }
 
@@ -104,4 +106,89 @@ std::string EWalletCoreImpl::setAccountLabel(const std::string& accountId, const
 std::string EWalletCoreImpl::getBalance(const std::string& sessionId, const std::string& accountId)
 {
     return wallet_accounts::get_balance(m_engine, sessionId, accountId);
+}
+
+// DOMAIN 3: ASSET TRANSFERS (DELEGATED TO WALLET_TRANSFERS)
+
+std::string EWalletCoreImpl::proposeNativeTransfer(const std::string& sessionId,
+                                                  const std::string& fromAccount,
+                                                  const std::string& toAccountOrName,
+                                                  const std::string& amountStr)
+{
+    return wallet_transfers::propose_native_transfer(m_engine, sessionId, fromAccount, toAccountOrName, amountStr);
+}
+
+std::string EWalletCoreImpl::proposeTokenTransfer(const std::string& sessionId,
+                                                 const std::string& fromHolding,
+                                                 const std::string& toHolding,
+                                                 const std::string& definitionId,
+                                                 const std::string& amountStr)
+{
+    return wallet_transfers::propose_token_transfer(m_engine, sessionId, fromHolding, toHolding, definitionId, amountStr);
+}
+
+std::string EWalletCoreImpl::getRequestStatus(const std::string& requestId)
+{
+    return wallet_transfers::get_request_status(m_engine, requestId);
+}
+
+std::string EWalletCoreImpl::cancelRequest(const std::string& requestId)
+{
+    return wallet_transfers::cancel_request(m_engine, requestId);
+}
+
+// DOMAIN 4: DAPP PROVIDER SDK & SESSIONS (DELEGATED TO WALLET_SESSIONS)
+
+std::string EWalletCoreImpl::connectDApp(const std::string& callerIdentity, uint64_t apiVersion)
+{
+    return wallet_sessions::connect(m_engine, callerIdentity, apiVersion);
+}
+
+std::string EWalletCoreImpl::disconnectDApp(const std::string& sessionId)
+{
+    return wallet_sessions::disconnect(m_engine, sessionId);
+}
+
+std::string EWalletCoreImpl::requestAccounts(const std::string& sessionId)
+{
+    return wallet_sessions::request_accounts(m_engine, sessionId);
+}
+
+std::string EWalletCoreImpl::listSessionAccounts(const std::string& sessionId)
+{
+    return wallet_sessions::list_accounts(m_engine, sessionId);
+}
+
+std::string EWalletCoreImpl::grantAccountAccess(const std::string& sessionId,
+                                               const std::string& accountId,
+                                               const std::string& grantKind)
+{
+    return wallet_sessions::grant_account(m_engine, sessionId, accountId, grantKind);
+}
+
+std::string EWalletCoreImpl::listSessions()
+{
+    return wallet_sessions::list_sessions(m_engine);
+}
+
+std::string EWalletCoreImpl::revokeSession(const std::string& sessionId)
+{
+    return wallet_sessions::revoke_session(m_engine, sessionId);
+}
+
+// DOMAIN 5: INTERACTIVE APPROVALS & EFFECT SIMULATION (DELEGATED TO WALLET_APPROVAL)
+
+std::string EWalletCoreImpl::setApprovalCallback(FfiApprovalCallback callback, void* userData)
+{
+    return wallet_approval::set_approval_callback(m_engine, callback, userData);
+}
+
+std::string EWalletCoreImpl::submitApprovalDecision(const std::string& requestId, int64_t decision)
+{
+    return wallet_approval::submit_approval_decision(m_engine, requestId, decision);
+}
+
+std::string EWalletCoreImpl::simulatePromptEffect(const std::string& promptJson)
+{
+    return wallet_approval::simulate_prompt_effect(promptJson);
 }

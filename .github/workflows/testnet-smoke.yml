@@ -5,6 +5,9 @@ on:
   schedule:
     - cron: '0 6 * * 1' # Weekly Monday 06:00 UTC
 
+permissions:
+  contents: read
+
 jobs:
   smoke-test:
     name: Testnet 0.4 Integration Smoke
@@ -12,25 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential nlohmann-json3-dev
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v16
 
-      - name: Build Integration Test Runner
-        run: |
-          g++ -std=c++20 \
-            tests/test_e_wallet_core.cpp \
-            src/e_wallet_core_impl.cpp \
-            src/wallet_engine.cpp \
-            src/wallet_accounts.cpp \
-            -Isrc \
-            -Ilib \
-            -Llib \
-            -llez_wallet_sdk \
-            -Wl,-rpath,lib \
-            -o tests/test_e_wallet_core_runner
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v9
 
-      - name: Run Testnet Smoke Validation
+      - name: Compile and Run Smoke Integration Tests
         run: |
-          ./tests/test_e_wallet_core_runner
+          nix develop --command bash -c "g++ -std=c++20 tests/test_e_wallet_core.cpp src/*.cpp -Isrc -Ilib -I\$LOGOS_CPP_SDK_ROOT/include -Llib -llez_wallet_sdk -lpcsclite -Wl,-rpath,lib -o tests/test_e_wallet_core_runner && ./tests/test_e_wallet_core_runner && rm tests/test_e_wallet_core_runner"
