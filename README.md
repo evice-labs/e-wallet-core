@@ -24,6 +24,12 @@ e-wallet-core/
 │   ├── wallet_sessions.cpp
 │   ├── wallet_approval.h         # Domain: Interactive approval prompts & effect simulations
 │   ├── wallet_approval.cpp
+│   ├── wallet_identity.h         # Domain: Identity Accountability (ZK credentials & Shamir registration)
+│   ├── wallet_identity.cpp
+│   ├── wallet_names.h            # Domain: Human-readable LNS (.lez) domain resolution
+│   ├── wallet_names.cpp
+│   ├── wallet_contracts.h        # Domain: Generic smart contract transaction invocations
+│   ├── wallet_contracts.cpp
 │   └── wallet_helpers.h          # RAII memory management, JSON helpers & hex utilities
 ├── tests/
 │   └── test_e_wallet_core.cpp    # End-to-end integration test runner
@@ -35,7 +41,7 @@ e-wallet-core/
 ### Core Design Principles
 * **Pure Modern C++20**: Standard library types (`std::string`, `std::vector`, `uint64_t`, `int64_t`, `std::unique_ptr`). No hard dependencies on heavyweight GUI frameworks (Qt plugin bindings and LIDL RPC glue are generated automatically by `logos-module-builder`).
 * **Master Coordinator (`EWalletCoreImpl`)**: Inherits from `LogosModuleContext` (`#include <logos_module_context.h>`), allowing seamless lifecycle integration within Logos Basecamp. Coordinates active engine handles and dispatches incoming RPC calls.
-* **Separation of Concerns**: Each business domain lives in its own translation unit under dedicated namespaces (`wallet_engine`, `wallet_accounts`, `wallet_transfers`, `wallet_sessions`, `wallet_approval`).
+* **Separation of Concerns**: Each business domain lives in its own translation unit under dedicated namespaces (`wallet_engine`, `wallet_accounts`, `wallet_transfers`, `wallet_sessions`, `wallet_approval`, `wallet_identity`, `wallet_names`, `wallet_contracts`).
 * **RAII Memory Safety**: C-ABI string allocations dynamically allocated by Rust FFI (`*mut c_char`) are immediately captured by `wallet_helpers::consume_ffi_string()`, ensuring zero memory leaks and automatic deallocation via `lez_wallet_free_string()`.
 * **Defensive Error Handling**: Every public method validates engine handle initialization and argument validity upfront, returning structured JSON error payloads instead of risking null-pointer dereferences or segmentation faults.
 
@@ -97,6 +103,33 @@ Implements human-in-the-loop security, providing clear previews of transaction c
 | `simulatePromptEffect` | `promptJson: string` | Synthesizes plain-language summary of intent, caller identity, target assets, verification status, and security warnings. |
 | `setApprovalCallback` *(protected / in-process)* | `callback: FfiApprovalCallback, userData: void*` | In-process C-ABI hook for host UI callback registration (`1` = Approve, `0` = Reject, `-1` = Deferred Prompt). |
 
+### Domain 6: Identity Accountability & Accountable Pseudonymity (`wallet_identity`)
+Provides native accountable pseudonymity, zero-knowledge identity commitments, scope-specific nullifiers, and Two-Tier Shamir Secret Sharing (SSS) threshold registration.
+
+| Method | Parameters | Description |
+| :--- | :--- | :--- |
+| `requestIdentityAccess` | `sessionId: string, grantKind: string` | Requests identity permissions (`"IdentityRead"` or `"IdentityPropose"`) for the session. |
+| `getIdentityCommitment` | `sessionId: string` | Queries 32-byte public identity commitment as a hex string (requires `IdentityRead`). |
+| `getIdentityCommitmentBytes` | `sessionId: string` | Directly copies 32-byte identity commitment into raw buffer and returns structured JSON (requires `IdentityRead`). |
+| `deriveScopedNullifier` | `sessionId: string, scopeId: string` | Derives deterministic scope-specific pseudonymous nullifier providing cross-scope unlinkability (requires `IdentityRead`). |
+| `signIdentityAttestation` | `sessionId: string, scopeId: string, messageHex: string` | Signs arbitrary message payload with scoped zero-knowledge credential (requires `IdentityPropose`). |
+| `prepareIdentityRegistration` | `sessionId: string, scopeId: string, nodePubkeysJson: string, thresholdK: uint64` | Prepares on-chain registration payload with Two-Tier Shamir Secret Sharing threshold encrypted shares (requires `IdentityPropose`). |
+
+### Domain 7: Human-Readable LNS Domain Resolution (`wallet_names`)
+Resolves human-readable `.lez` names to LEZ accounts, private receiving keys, and text records according to the LNS protocol.
+
+| Method | Parameters | Description |
+| :--- | :--- | :--- |
+| `resolveName` | `sessionId: string, name: string` | Validates domain format (`[a-z0-9-]`, 1-32 chars, `.lez` suffix) and resolves destination accounts, npk, vpk, expiry, and text metadata. |
+
+### Domain 8: Smart Contract Invocations (`wallet_contracts`)
+Orchestrates generic smart contract calls with calldata dispatch and account mentions.
+
+| Method | Parameters | Description |
+| :--- | :--- | :--- |
+| `proposeTransaction` | `sessionId: string, mentionsJson: string, calldataHex: string, description: string` | Proposes generic smart contract transaction with validated account mentions array and hex calldata; enqueues request with `pending_approval` status. |
+
+
 ## 3. Vendored Libraries & Dependency Resolution
 
 Following the standard design pattern of `logos-delivery-module`:
@@ -132,11 +165,12 @@ nix develop --command bash -c "g++ -std=c++20 \
 ```
 
 ### Test Suite Execution Plan
-The integration test runner executes 4 sequential verification suites:
+The integration test runner executes 5 sequential verification suites:
 1. **Uninitialized Engine Guards**: Asserts that all public methods fail safely with descriptive JSON errors when called prior to `initEngine()`.
 2. **Engine Lifecycle & Multi-Account Derivation**: Tests wallet creation, mnemonic restoration, public/private account derivation, and lock/unlock cycles.
 3. **dApp Provider SDK & Session Security**: Tests connection handshakes, scoped account access grants (`"read"` / `"propose"`), balance query gating, and session revocation.
 4. **Asset Transfers, Interactive Approvals & Effect Simulation**: Tests transfer validation (zero amount & self-transfer rejection), approval prompt callback interception, plain-language simulation decoding, and deferred approval submission.
+5. **Identity Accountability, LNS Domain Resolution & Smart Contracts**: Tests identity permission access gating, 32-byte public commitment extraction, scoped nullifier determinism and cross-scope unlinkability, ZK attestation signing, Two-Tier Shamir Secret Sharing registration, LNS name format validation & resolution dispatch, and generic smart contract transaction queuing, status tracking, and cancellation.
 
 ## 5. CI/CD Workflows
 
