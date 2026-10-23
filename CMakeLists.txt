@@ -32,6 +32,12 @@ logos_module(
         src/wallet_sessions.cpp
         src/wallet_approval.h
         src/wallet_approval.cpp
+        src/wallet_identity.h
+        src/wallet_identity.cpp
+        src/wallet_names.h
+        src/wallet_names.cpp
+        src/wallet_contracts.h
+        src/wallet_contracts.cpp
         src/wallet_helpers.h
     EXTERNAL_LIBS
         lez_wallet_sdk
