@@ -177,7 +177,7 @@ The integration test runner executes 5 sequential verification suites:
 Continuous Integration workflows are located in `.github/workflows/`:
 * **`ci-linux.yml`**: Validates C-ABI symbol exports on Ubuntu, builds the complete Nix core module package, and executes the native integration test suite inside the pinned Nix environment.
 * **`ci-macos.yml`**: Validates building the core module package on macOS.
-* **`testnet-smoke.yml`**: Scheduled weekly smoke tests to ensure ongoing compatibility with the active testnet profile.
+* **`testnet-smoke.yml`**: Scheduled weekly (and on-demand `workflow_dispatch`) smoke test that queries the live LEZ testnet sequencer (`https://testnet.lez.logos.co`) for health, block heights, and fee states, verifies C-ABI symbols, builds the module package, and executes the integration test suite.
 
 ## 6. License
 
