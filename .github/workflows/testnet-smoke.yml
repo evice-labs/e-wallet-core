@@ -18,7 +18,7 @@ env:
 
 jobs:
   testnet-smoke:
-    name: LEZ Testnet Integration Smoke
+    name: LEZ Testnet 0.4 Integration Smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
