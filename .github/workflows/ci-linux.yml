@@ -23,7 +23,7 @@ jobs:
 
       - name: Verify FFI dynamic library headers and symbols
         run: |
-          nm -D lib/liblez_wallet_sdk.so | grep -q "lez_wallet_engine_new" || {
+          nm -D lib/x86_64-linux/liblez_wallet_sdk.so | grep -q "lez_wallet_engine_new" || {
             echo "Error: Required FFI symbols not found in vendored library"
             exit 1
           }

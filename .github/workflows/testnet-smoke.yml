@@ -53,15 +53,15 @@ jobs:
 
       - name: Verify Vendored C-ABI FFI Dynamic Symbols
         run: |
-          nm -D lib/liblez_wallet_sdk.so | grep -q "lez_wallet_engine_new" || {
+          nm -D lib/x86_64-linux/liblez_wallet_sdk.so | grep -q "lez_wallet_engine_new" || {
             echo "Error: Required FFI symbols not found in vendored library"
             exit 1
           }
-          nm -D lib/liblez_wallet_sdk.so | grep -q "lez_wallet_resolve_name" || {
+          nm -D lib/x86_64-linux/liblez_wallet_sdk.so | grep -q "lez_wallet_resolve_name" || {
             echo "Error: LNS resolver FFI symbol missing"
             exit 1
           }
-          nm -D lib/liblez_wallet_sdk.so | grep -q "lez_wallet_request_identity_access" || {
+          nm -D lib/x86_64-linux/liblez_wallet_sdk.so | grep -q "lez_wallet_request_identity_access" || {
             echo "Error: Identity FFI symbol missing"
             exit 1
           }
