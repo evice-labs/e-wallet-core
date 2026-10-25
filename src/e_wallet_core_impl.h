@@ -70,6 +70,20 @@ public:
     std::string submitApprovalDecision(const std::string& requestId, int64_t decision);
     std::string simulatePromptEffect(const std::string& promptJson);
 
+    // Domain 6: Identity Accountability (wallet_identity)
+    std::string requestIdentityAccess(const std::string& sessionId, const std::string& grantKind);
+    std::string getIdentityCommitment(const std::string& sessionId);
+    std::string getIdentityCommitmentBytes(const std::string& sessionId);
+    std::string deriveScopedNullifier(const std::string& sessionId, const std::string& scopeId);
+    std::string signIdentityAttestation(const std::string& sessionId, const std::string& scopeId, const std::string& messageHex);
+    std::string prepareIdentityRegistration(const std::string& sessionId, const std::string& scopeId, const std::string& nodePubkeysJson, uint64_t thresholdK);
+
+    // Domain 7: Human-Readable LNS Names (wallet_names)
+    std::string resolveName(const std::string& sessionId, const std::string& name);
+
+    // Domain 8: Smart Contract Invocations (wallet_contracts)
+    std::string proposeTransaction(const std::string& sessionId, const std::string& mentionsJson, const std::string& calldataHex, const std::string& description);
+
 protected:
     // In-process host & test hook for C-ABI callback registration (not an RPC wire method)
     std::string setApprovalCallback(FfiApprovalCallback callback, void* userData);

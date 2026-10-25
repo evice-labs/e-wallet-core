@@ -4,6 +4,9 @@
 #include "wallet_transfers.h"
 #include "wallet_sessions.h"
 #include "wallet_approval.h"
+#include "wallet_identity.h"
+#include "wallet_names.h"
+#include "wallet_contracts.h"
 #include "wallet_helpers.h"
 #include <iostream>
 
@@ -192,3 +195,50 @@ std::string EWalletCoreImpl::simulatePromptEffect(const std::string& promptJson)
 {
     return wallet_approval::simulate_prompt_effect(promptJson);
 }
+
+// DOMAIN 6: IDENTITY ACCOUNTABILITY (DELEGATED TO WALLET_IDENTITY)
+
+std::string EWalletCoreImpl::requestIdentityAccess(const std::string& sessionId, const std::string& grantKind)
+{
+    return wallet_identity::request_identity_access(m_engine, sessionId, grantKind);
+}
+
+std::string EWalletCoreImpl::getIdentityCommitment(const std::string& sessionId)
+{
+    return wallet_identity::get_identity_commitment(m_engine, sessionId);
+}
+
+std::string EWalletCoreImpl::getIdentityCommitmentBytes(const std::string& sessionId)
+{
+    return wallet_identity::get_identity_commitment_bytes(m_engine, sessionId);
+}
+
+std::string EWalletCoreImpl::deriveScopedNullifier(const std::string& sessionId, const std::string& scopeId)
+{
+    return wallet_identity::derive_scoped_nullifier(m_engine, sessionId, scopeId);
+}
+
+std::string EWalletCoreImpl::signIdentityAttestation(const std::string& sessionId, const std::string& scopeId, const std::string& messageHex)
+{
+    return wallet_identity::sign_identity_attestation(m_engine, sessionId, scopeId, messageHex);
+}
+
+std::string EWalletCoreImpl::prepareIdentityRegistration(const std::string& sessionId, const std::string& scopeId, const std::string& nodePubkeysJson, uint64_t thresholdK)
+{
+    return wallet_identity::prepare_identity_registration(m_engine, sessionId, scopeId, nodePubkeysJson, thresholdK);
+}
+
+// DOMAIN 7: HUMAN-READABLE LNS NAMES (DELEGATED TO WALLET_NAMES)
+
+std::string EWalletCoreImpl::resolveName(const std::string& sessionId, const std::string& name)
+{
+    return wallet_names::resolve_name(m_engine, sessionId, name);
+}
+
+// DOMAIN 8: SMART CONTRACT INVOCATIONS (DELEGATED TO WALLET_CONTRACTS)
+
+std::string EWalletCoreImpl::proposeTransaction(const std::string& sessionId, const std::string& mentionsJson, const std::string& calldataHex, const std::string& description)
+{
+    return wallet_contracts::propose_transaction(m_engine, sessionId, mentionsJson, calldataHex, description);
+}
+
