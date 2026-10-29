@@ -20,7 +20,7 @@
       ],
       "runtime": [
         "nlohmann_json",
-        "pcsclite"
+        "pcsclite.lib"
       ]
     },
     "external_libraries": [
@@ -37,7 +37,13 @@
       "extra_include_dirs": [
         "lib"
       ],
-      "extra_link_libraries": []
+      "extra_link_libraries": [
+        "pcsclite"
+      ]
     }
-  }
+  },
+  "include": [
+    "libpcsclite.so.1",
+    "libpcsclite.so"
+  ]
 }

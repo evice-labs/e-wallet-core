@@ -41,4 +41,6 @@ logos_module(
         src/wallet_helpers.h
     EXTERNAL_LIBS
         lez_wallet_sdk
+    LINK_LIBRARIES
+        pcsclite
 )
