@@ -23,7 +23,7 @@ jobs:
 
       - name: Verify FFI dynamic library headers and symbols
         run: |
-          nm -D lib/liblez_wallet_sdk.so | grep -q "lez_wallet_engine_new" || {
+          nm -D lib/x86_64-linux/liblez_wallet_sdk.so | grep -q "lez_wallet_engine_new" || {
             echo "Error: Required FFI symbols not found in vendored library"
             exit 1
           }
@@ -35,4 +35,4 @@ jobs:
 
       - name: Compile and Execute Integration Test Suite
         run: |
-          nix develop --command bash -c "g++ -std=c++20 tests/test_e_wallet_core.cpp src/*.cpp -Isrc -Ilib -I\$LOGOS_CPP_SDK_ROOT/include -Llib -llez_wallet_sdk -lpcsclite -Wl,-rpath,lib -o tests/test_e_wallet_core_runner && ./tests/test_e_wallet_core_runner && rm tests/test_e_wallet_core_runner"
+          nix develop --command bash -c "g++ -std=c++20 tests/test_e_wallet_core.cpp src/*.cpp -Isrc -Ilib -I\$LOGOS_CPP_SDK_ROOT/include -Llib/x86_64-linux -llez_wallet_sdk -lpcsclite -Wl,-rpath,lib/x86_64-linux -o tests/test_e_wallet_core_runner && ./tests/test_e_wallet_core_runner && rm tests/test_e_wallet_core_runner"

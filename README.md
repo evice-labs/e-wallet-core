@@ -10,7 +10,10 @@ Following the idiomatic patterns of the Logos Ecosystem (such as `logos-delivery
 e-wallet-core/
 ├── lib/
 │   ├── lez_wallet_sdk.h          # C-ABI header definitions from Rust SDK
-│   └── liblez_wallet_sdk.so      # Pre-compiled C-ABI shared library
+│   ├── x86_64-linux/
+│   │   └── liblez_wallet_sdk.so      # Pre-compiled C-ABI shared library (Linux x86-64)
+│   └── aarch64-darwin/
+│       └── liblez_wallet_sdk.dylib   # Pre-compiled C-ABI shared library (macOS Apple Silicon)
 ├── src/
 │   ├── e_wallet_core_impl.h      # Master Coordinator class declaration (LogosModuleContext)
 │   ├── e_wallet_core_impl.cpp    # Master Coordinator implementation (API routing & lifecycle)
@@ -135,7 +138,7 @@ Orchestrates generic smart contract calls with calldata dispatch and account men
 Following the standard design pattern of `logos-delivery-module`:
 
 * **`lib/lez_wallet_sdk.h`**: Vendored C-ABI function declarations and struct layouts for the Evice LEZ Wallet Rust SDK.
-* **`lib/liblez_wallet_sdk.so`**: Vendored pre-compiled C-ABI shared library implementing cryptography, state machines, and RPC bindings.
+* **`lib/<nix-system>/liblez_wallet_sdk.{so,dylib}`**: Vendored pre-compiled C-ABI shared library implementing cryptography, state machines, and RPC bindings, one per platform (`x86_64-linux`, `aarch64-darwin`). `logos-module-builder` picks the one for the system it builds on. The macOS library is `cargo build --release -p sdk-ffi` of e-wallet-sdk v0.1.1 (`libsdk_ffi.dylib`), renamed, with its install name set to `@rpath/liblez_wallet_sdk.dylib` and re-signed ad hoc.
 * **Logos SDK Headers & Packages**: System headers such as `<logos_module_context.h>` and dependencies (`nlohmann_json`, `pcsclite`) are resolved automatically via Nix and `logos-module-builder` (declared in `metadata.json`), keeping the repository clean and avoiding redundant in-tree vendoring.
 
 ## 4. Building & Running Integration Tests
@@ -157,10 +160,10 @@ nix develop --command bash -c "g++ -std=c++20 \
   -Isrc \
   -Ilib \
   -I\$LOGOS_CPP_SDK_ROOT/include \
-  -Llib \
+  -Llib/x86_64-linux \
   -llez_wallet_sdk \
   -lpcsclite \
-  -Wl,-rpath,lib \
+  -Wl,-rpath,lib/x86_64-linux \
   -o tests/test_e_wallet_core_runner && ./tests/test_e_wallet_core_runner && rm tests/test_e_wallet_core_runner"
 ```
 
