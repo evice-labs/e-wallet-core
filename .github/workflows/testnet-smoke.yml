@@ -74,5 +74,5 @@ jobs:
       - name: Execute Full Integration Test Suite on Testnet Target
         run: |
           nix develop --command bash -c "g++ -std=c++20 tests/test_e_wallet_core.cpp src/*.cpp \
-            -Isrc -Ilib -I\$LOGOS_CPP_SDK_ROOT/include -Llib -llez_wallet_sdk -lpcsclite \
-            -Wl,-rpath,lib -o tests/test_e_wallet_core_runner && ./tests/test_e_wallet_core_runner && rm tests/test_e_wallet_core_runner"
+            -Isrc -Ilib -I\$LOGOS_CPP_SDK_ROOT/include -Llib/x86_64-linux -llez_wallet_sdk -lpcsclite \
+            -Wl,-rpath,lib/x86_64-linux -o tests/test_e_wallet_core_runner && ./tests/test_e_wallet_core_runner && rm tests/test_e_wallet_core_runner"

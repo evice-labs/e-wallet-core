@@ -160,10 +160,10 @@ nix develop --command bash -c "g++ -std=c++20 \
   -Isrc \
   -Ilib \
   -I\$LOGOS_CPP_SDK_ROOT/include \
-  -Llib \
+  -Llib/x86_64-linux \
   -llez_wallet_sdk \
   -lpcsclite \
-  -Wl,-rpath,lib \
+  -Wl,-rpath,lib/x86_64-linux \
   -o tests/test_e_wallet_core_runner && ./tests/test_e_wallet_core_runner && rm tests/test_e_wallet_core_runner"
 ```
 
