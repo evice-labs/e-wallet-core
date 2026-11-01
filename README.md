@@ -60,7 +60,9 @@ Manages the underlying RocksDB/JSON secure storage, master BIP39 seeds, and engi
 | `restoreWallet`| `mnemonic: string, password: string` | Restores wallet keystore from a 12 or 24-word recovery phrase. |
 | `lockWallet` | *(none)* | Clears sensitive decryption keys and sessions from volatile memory. |
 | `unlockWallet` | `password: string` | Authenticates and decrypts keystore credentials. |
+| `changePassword` | `oldPassword: string, newPassword: string` | Re-encrypts keystore storage and updates the master encryption passphrase via SDK FFI. |
 | `getSdkInfo` | *(none)* | Queries SDK runtime version, capability flags, and target network. |
+| `openStorageFolder` | `dataDir: string` | Launches platform-native file manager (`xdg-open` / `open` / `explorer`) to view persistent storage files. |
 | `isInitialized`| *(none)* | Returns `true` if engine is active and unlocked; otherwise `false`. |
 
 ### Domain 2: Multi-Account Management & Balances (`wallet_accounts`)
@@ -170,7 +172,7 @@ nix develop --command bash -c "g++ -std=c++20 \
 ### Test Suite Execution Plan
 The integration test runner executes 5 sequential verification suites:
 1. **Uninitialized Engine Guards**: Asserts that all public methods fail safely with descriptive JSON errors when called prior to `initEngine()`.
-2. **Engine Lifecycle & Multi-Account Derivation**: Tests wallet creation, mnemonic restoration, public/private account derivation, and lock/unlock cycles.
+2. **Engine Lifecycle & Multi-Account Derivation**: Tests wallet creation, mnemonic restoration, public/private account derivation, keystore passphrase rotation (`changePassword`), storage directory inspection, and lock/unlock cycles.
 3. **dApp Provider SDK & Session Security**: Tests connection handshakes, scoped account access grants (`"read"` / `"propose"`), balance query gating, and session revocation.
 4. **Asset Transfers, Interactive Approvals & Effect Simulation**: Tests transfer validation (zero amount & self-transfer rejection), approval prompt callback interception, plain-language simulation decoding, and deferred approval submission.
 5. **Identity Accountability, LNS Domain Resolution & Smart Contracts**: Tests identity permission access gating, 32-byte public commitment extraction, scoped nullifier determinism and cross-scope unlinkability, ZK attestation signing, Two-Tier Shamir Secret Sharing registration, LNS name format validation & resolution dispatch, and generic smart contract transaction queuing, status tracking, and cancellation.
