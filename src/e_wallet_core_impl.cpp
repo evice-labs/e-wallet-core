@@ -74,9 +74,19 @@ std::string EWalletCoreImpl::unlockWallet(const std::string& password)
     return wallet_engine::unlock_wallet(m_engine, password);
 }
 
+std::string EWalletCoreImpl::changePassword(const std::string& oldPassword, const std::string& newPassword)
+{
+    return wallet_engine::change_password(m_engine, oldPassword, newPassword);
+}
+
 std::string EWalletCoreImpl::getSdkInfo()
 {
     return wallet_engine::get_sdk_info(m_engine);
+}
+
+std::string EWalletCoreImpl::openStorageFolder(const std::string& dataDir)
+{
+    return wallet_engine::open_storage_folder(dataDir.empty() ? m_dataDir : dataDir);
 }
 
 bool EWalletCoreImpl::isInitialized() const

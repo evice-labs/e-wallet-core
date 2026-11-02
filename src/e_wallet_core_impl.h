@@ -32,7 +32,9 @@ public:
     std::string restoreWallet(const std::string& mnemonic, const std::string& password);
     std::string lockWallet();
     std::string unlockWallet(const std::string& password);
+    std::string changePassword(const std::string& oldPassword, const std::string& newPassword);
     std::string getSdkInfo();
+    std::string openStorageFolder(const std::string& dataDir);
     bool isInitialized() const;
 
     // Domain 2: Multi-Account Management (wallet_accounts)

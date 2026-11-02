@@ -120,6 +120,19 @@ void test_engine_lifecycle_and_accounts() {
     assert(json::parse(wallet.lockWallet())["ok"] == true);
     assert(json::parse(wallet.unlockWallet("testpass123"))["ok"] == true);
 
+    // Passphrase rotation (change password)
+    std::string badChange = wallet.changePassword("wrongpass", "newpass456");
+    assert(json::parse(badChange)["ok"] == false);
+    std::string goodChange = wallet.changePassword("testpass123", "newpass456");
+    assert(json::parse(goodChange)["ok"] == true);
+    assert(json::parse(wallet.lockWallet())["ok"] == true);
+    assert(json::parse(wallet.unlockWallet("wrongpass"))["ok"] == false);
+    assert(json::parse(wallet.unlockWallet("newpass456"))["ok"] == true);
+
+    // Open storage folder
+    assert(json::parse(wallet.openStorageFolder(""))["ok"] == true);
+    assert(json::parse(wallet.openStorageFolder(testDir))["ok"] == true);
+
     std::filesystem::remove_all(testDir);
     std::cout << "  ✓ Engine lifecycle and accounts passed\n";
 }

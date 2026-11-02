@@ -69,6 +69,21 @@ std::string unlock_wallet(FfiSdkEngine* engine, const std::string& password) {
     return wallet_helpers::consume_ffi_string(raw);
 }
 
+std::string change_password(FfiSdkEngine* engine, const std::string& old_password, const std::string& new_password) {
+    if (!engine) {
+        return wallet_helpers::make_error_json("Wallet engine is not initialized");
+    }
+    if (old_password.empty()) {
+        return wallet_helpers::make_error_json("Current password cannot be empty");
+    }
+    if (new_password.empty() || new_password.length() < 8) {
+        return wallet_helpers::make_error_json("New password must be at least 8 characters");
+    }
+
+    char* raw = lez_wallet_change_password(engine, old_password.c_str(), new_password.c_str());
+    return wallet_helpers::consume_ffi_string(raw);
+}
+
 std::string get_sdk_info(FfiSdkEngine* engine) {
     if (!engine) {
         return wallet_helpers::make_error_json("Wallet engine is not initialized");
@@ -76,6 +91,20 @@ std::string get_sdk_info(FfiSdkEngine* engine) {
 
     char* raw = lez_wallet_sdk_info(engine);
     return wallet_helpers::consume_ffi_string(raw);
+}
+
+std::string open_storage_folder(const std::string& data_dir) {
+    if (data_dir.empty()) {
+        return wallet_helpers::make_error_json("Data directory path is empty");
+    }
+#if defined(__linux__) || defined(__unix__)
+    std::string cmd = "xdg-open "" + data_dir + "" >/dev/null 2>&1 &";
+    int ret = std::system(cmd.c_str());
+    (void)ret;
+    return wallet_helpers::make_ok_json();
+#else
+    return wallet_helpers::make_error_json("Not supported on this platform");
+#endif
 }
 
 } // namespace wallet_engine
