@@ -81,8 +81,11 @@ Orchestrates transfer proposal, input validation, and transaction tracking.
 
 | Method | Parameters | Description |
 | :--- | :--- | :--- |
-| `proposeNativeTransfer` | `sessionId: string, fromAccount: string, toAccountOrName: string, amountStr: string` | Proposes native asset transfer. Validates positive amount and prevents self-transfers before queuing. |
+| `proposeNativeTransfer` | `sessionId: string, fromAccount: string, toAccountOrName: string, amountStr: string` | Proposes native asset transfer. Validates positive amount and delegates privacy-aware self-transfer checks to SDK engine. |
 | `proposeTokenTransfer` | `sessionId: string, fromHolding: string, toHolding: string, definitionId: string, amountStr: string` | Proposes transfer of fungible token program assets. |
+| `listTokenHoldings` | `sessionId: string` | Lists tracked token holdings accessible to the session. |
+| `listAllTokenHoldings` | *(none)* | Privileged query returning all registered token holdings in the keystore. |
+| `registerTokenHolding` | `holdingId: string, definitionId: string, symbol: string, name: string, isShielded: bool` | Registers or updates a tracked token program holding in persistent storage. |
 | `getRequestStatus` | `requestId: string` | Queries current state of an action (`pending_approval`, `approved`, `rejected`, `submitted`, `cancelled`). |
 | `cancelRequest` | `requestId: string` | Cancels a pending request prior to execution. |
 
@@ -128,11 +131,12 @@ Resolves human-readable `.lez` names to LEZ accounts, private receiving keys, an
 | `resolveName` | `sessionId: string, name: string` | Validates domain format (`[a-z0-9-]`, 1-32 chars, `.lez` suffix) and resolves destination accounts, npk, vpk, expiry, and text metadata. |
 
 ### Domain 8: Smart Contract Invocations (`wallet_contracts`)
-Orchestrates generic smart contract calls with calldata dispatch and account mentions.
+Orchestrates generic and explicit smart contract calls with calldata dispatch and program actor state binding.
 
 | Method | Parameters | Description |
 | :--- | :--- | :--- |
 | `proposeTransaction` | `sessionId: string, mentionsJson: string, calldataHex: string, description: string` | Proposes generic smart contract transaction with validated account mentions array and hex calldata; enqueues request with `pending_approval` status. |
+| `proposeContractCall` | `sessionId: string, programId: string, payerId: string, mentionsJson: string, calldataHex: string, description: string` | Proposes explicit smart contract execution targeting `programId` paid by `payerId`, binding signer and mention actor states. |
 
 
 ## 3. Vendored Libraries & Dependency Resolution
