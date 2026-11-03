@@ -35,7 +35,7 @@ std::string submit_approval_decision(FfiSdkEngine* engine,
  * @brief Parses and simulates the human-readable effect summary of an approval prompt.
  *
  * Extracts dApp identity, request type, call effects, program source verification
- * status, and security warnings according to LP-0021 requirements.
+ * status, and security warnings.
  *
  * @param prompt_json Raw JSON string received from the approval callback.
  * @return JSON containing formatted prompt details and human-readable effect summary.

@@ -150,6 +150,25 @@ std::string EWalletCoreImpl::cancelRequest(const std::string& requestId)
     return wallet_transfers::cancel_request(m_engine, requestId);
 }
 
+std::string EWalletCoreImpl::listTokenHoldings(const std::string& sessionId)
+{
+    return wallet_transfers::list_token_holdings(m_engine, sessionId);
+}
+
+std::string EWalletCoreImpl::listAllTokenHoldings()
+{
+    return wallet_transfers::list_all_token_holdings(m_engine);
+}
+
+std::string EWalletCoreImpl::registerTokenHolding(const std::string& holdingId,
+                                                 const std::string& definitionId,
+                                                 const std::string& symbol,
+                                                 const std::string& name,
+                                                 bool isShielded)
+{
+    return wallet_transfers::register_token_holding(m_engine, holdingId, definitionId, symbol, name, isShielded);
+}
+
 // DOMAIN 4: DAPP PROVIDER SDK & SESSIONS (DELEGATED TO WALLET_SESSIONS)
 
 std::string EWalletCoreImpl::connectDApp(const std::string& callerIdentity, uint64_t apiVersion)
@@ -250,5 +269,15 @@ std::string EWalletCoreImpl::resolveName(const std::string& sessionId, const std
 std::string EWalletCoreImpl::proposeTransaction(const std::string& sessionId, const std::string& mentionsJson, const std::string& calldataHex, const std::string& description)
 {
     return wallet_contracts::propose_transaction(m_engine, sessionId, mentionsJson, calldataHex, description);
+}
+
+std::string EWalletCoreImpl::proposeContractCall(const std::string& sessionId,
+                                                const std::string& programId,
+                                                const std::string& payerId,
+                                                const std::string& mentionsJson,
+                                                const std::string& calldataHex,
+                                                const std::string& description)
+{
+    return wallet_contracts::propose_contract_call(m_engine, sessionId, programId, payerId, mentionsJson, calldataHex, description);
 }
 

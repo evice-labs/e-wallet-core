@@ -56,6 +56,13 @@ public:
                                      const std::string& amountStr);
     std::string getRequestStatus(const std::string& requestId);
     std::string cancelRequest(const std::string& requestId);
+    std::string listTokenHoldings(const std::string& sessionId);
+    std::string listAllTokenHoldings();
+    std::string registerTokenHolding(const std::string& holdingId,
+                                     const std::string& definitionId,
+                                     const std::string& symbol,
+                                     const std::string& name,
+                                     bool isShielded);
 
     // Domain 4: dApp Provider SDK & Sessions (wallet_sessions)
     std::string connectDApp(const std::string& callerIdentity, uint64_t apiVersion);
@@ -85,6 +92,12 @@ public:
 
     // Domain 8: Smart Contract Invocations (wallet_contracts)
     std::string proposeTransaction(const std::string& sessionId, const std::string& mentionsJson, const std::string& calldataHex, const std::string& description);
+    std::string proposeContractCall(const std::string& sessionId,
+                                    const std::string& programId,
+                                    const std::string& payerId,
+                                    const std::string& mentionsJson,
+                                    const std::string& calldataHex,
+                                    const std::string& description);
 
 protected:
     // In-process host & test hook for C-ABI callback registration (not an RPC wire method)

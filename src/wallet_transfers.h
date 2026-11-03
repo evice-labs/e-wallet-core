@@ -57,4 +57,24 @@ std::string get_request_status(FfiSdkEngine* engine, const std::string& request_
  */
 std::string cancel_request(FfiSdkEngine* engine, const std::string& request_id);
 
+/**
+ * @brief Lists tracked token holdings accessible to the session.
+ */
+std::string list_token_holdings(FfiSdkEngine* engine, const std::string& session_id);
+
+/**
+ * @brief Privileged Owner API: Lists all tracked token holdings in the wallet.
+ */
+std::string list_all_token_holdings(FfiSdkEngine* engine);
+
+/**
+ * @brief Privileged Owner API: Registers or updates a tracked token holding.
+ */
+std::string register_token_holding(FfiSdkEngine* engine,
+                                   const std::string& holding_id,
+                                   const std::string& definition_id,
+                                   const std::string& symbol,
+                                   const std::string& name,
+                                   bool is_shielded);
+
 } // namespace wallet_transfers

@@ -270,7 +270,7 @@ void test_transfers_and_approvals() {
     assert(!g_capturedPrompt.empty());
     std::cout << "  ✓ Captured approval prompt: " << g_capturedPrompt << "\n";
 
-    // Simulate and decode the prompt effects (LP-0021 usability requirement)
+    // Simulate and decode the prompt effects (Human-readable effect simulation requirement)
     std::string simRes = wallet.simulatePromptEffect(g_capturedPrompt);
     auto simJson = json::parse(simRes);
     assert(simJson["ok"] == true);
@@ -436,6 +436,31 @@ void test_identity_contracts_and_names() {
     assert(json::parse(wallet.getRequestStatus(contractReqId))["ok"] == true);
     assert(json::parse(wallet.cancelRequest(contractReqId))["ok"] == true);
     std::cout << "  ✓ Smart contract transaction status checked and cancelled\n";
+
+    // --- Sub-test F: Explicit Smart Contract Call & Token Holdings ---
+    std::string regHoldRes = wallet.registerTokenHolding(aliceId, aliceId, "LOGOS", "Logos Token", false);
+    assert(json::parse(regHoldRes)["ok"] == true);
+    std::cout << "  ✓ Token holding registered successfully\n";
+
+    std::string allHoldRes = wallet.listAllTokenHoldings();
+    auto allHoldJson = json::parse(allHoldRes);
+    assert(allHoldJson["ok"] == true);
+    assert(allHoldJson["data"].size() >= 1);
+    std::cout << "  ✓ Token holdings listed (owner): " << allHoldJson["data"].size() << " holding(s)\n";
+
+    std::string dappHoldRes = wallet.listTokenHoldings(sessId);
+    auto dappHoldJson = json::parse(dappHoldRes);
+    assert(dappHoldJson["ok"] == true);
+    assert(dappHoldJson["data"].size() >= 1);
+    std::cout << "  ✓ Token holdings listed (dApp session): " << dappHoldJson["data"][0]["symbol"] << "\n";
+
+    std::string callRes = wallet.proposeContractCall(sessId, aliceId, aliceId, mentions.dump(), calldataHex, "Explicit contract call test");
+    auto callJson = json::parse(callRes);
+    assert(callJson["ok"] == true);
+    assert(callJson.contains("request_id"));
+    std::string callReqId = callJson["request_id"].get<std::string>();
+    assert(json::parse(wallet.cancelRequest(callReqId))["ok"] == true);
+    std::cout << "  ✓ Explicit smart contract call proposed and cancelled: " << callReqId << "\n";
 
     std::filesystem::remove_all(testDir);
     std::cout << "  ✓ All Identity, LNS, and Smart Contract tests passed successfully\n";
