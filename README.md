@@ -74,7 +74,8 @@ Derives and organizes transparent and shielded accounts, persisting account meta
 | `createPrivateAccount`| `label: string` | Derives a shielded zero-knowledge account for private transactions. |
 | `listAllAccounts` | *(none)* | Returns a JSON array of all registered accounts, labels, and types. |
 | `setAccountLabel` | `accountId: string, label: string, isPrivate: bool` | Updates human-readable label for an account. |
-| `getBalance` | `sessionId: string, accountId: string` | Returns native balance for an account authorized under the active session. |
+| `getBalance` | `sessionId: string, accountId: string` | Returns factual native balance for an account authorized under the active session (aggregates zero-knowledge circuit shielded pool and public pool for private accounts). |
+| `resolveAccount` | `input: string` | Resolves an account identifier (raw Base58, prefixed `Public/...`, `Private/...`, or `*.lez` domain name) returning canonical address, privacy type, label, and local ownership. |
 
 ### Domain 3: Asset Transfers & Transaction Lifecycle (`wallet_transfers`)
 Orchestrates transfer proposal, input validation, and transaction tracking.
