@@ -43,6 +43,7 @@ public:
     std::string listAllAccounts();
     std::string setAccountLabel(const std::string& accountId, const std::string& label, bool isPrivate);
     std::string getBalance(const std::string& sessionId, const std::string& accountId);
+    std::string resolveAccount(const std::string& input);
 
     // Domain 3: Asset Transfers (wallet_transfers)
     std::string proposeNativeTransfer(const std::string& sessionId,

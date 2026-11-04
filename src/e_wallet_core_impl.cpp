@@ -121,6 +121,11 @@ std::string EWalletCoreImpl::getBalance(const std::string& sessionId, const std:
     return wallet_accounts::get_balance(m_engine, sessionId, accountId);
 }
 
+std::string EWalletCoreImpl::resolveAccount(const std::string& input)
+{
+    return wallet_accounts::resolve_account(m_engine, input);
+}
+
 // DOMAIN 3: ASSET TRANSFERS (DELEGATED TO WALLET_TRANSFERS)
 
 std::string EWalletCoreImpl::proposeNativeTransfer(const std::string& sessionId,

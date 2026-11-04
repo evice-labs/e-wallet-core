@@ -35,4 +35,10 @@ std::string get_balance(FfiSdkEngine* engine,
                         const std::string& session_id,
                         const std::string& account_id);
 
+/**
+ * @brief Resolves an account identifier (raw Base58, prefixed Public/..., prefixed Private/..., or *.lez name).
+ * Identifies privacy type, canonical address format, and user label.
+ */
+std::string resolve_account(FfiSdkEngine* engine, const std::string& input);
+
 } // namespace wallet_accounts

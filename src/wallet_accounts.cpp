@@ -62,4 +62,16 @@ std::string get_balance(FfiSdkEngine* engine,
     return wallet_helpers::consume_ffi_string(raw);
 }
 
+std::string resolve_account(FfiSdkEngine* engine, const std::string& input) {
+    if (!engine) {
+        return wallet_helpers::make_error_json("Wallet engine is not initialized");
+    }
+    if (input.empty()) {
+        return wallet_helpers::make_error_json("Input address cannot be empty");
+    }
+
+    char* raw = lez_wallet_resolve_account(engine, input.c_str());
+    return wallet_helpers::consume_ffi_string(raw);
+}
+
 } // namespace wallet_accounts
