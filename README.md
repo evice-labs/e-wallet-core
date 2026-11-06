@@ -62,6 +62,8 @@ Manages the underlying RocksDB/JSON secure storage, master BIP39 seeds, and engi
 | `unlockWallet` | `password: string` | Authenticates and decrypts keystore credentials. |
 | `changePassword` | `oldPassword: string, newPassword: string` | Re-encrypts keystore storage and updates the master encryption passphrase via SDK FFI. |
 | `getSdkInfo` | *(none)* | Queries SDK runtime version, capability flags, and target network. |
+| `getGasLimit` | *(none)* | Queries the active transaction gas limit seed (default: 34,000 units). |
+| `setGasLimit` | `limitStr: string` | Updates the transaction gas limit seed forwarded to SDK Engine and persistent state. |
 | `openStorageFolder` | `dataDir: string` | Launches platform-native file manager (`xdg-open` / `open` / `explorer`) to view persistent storage files. |
 | `isInitialized`| *(none)* | Returns `true` if engine is active and unlocked; otherwise `false`. |
 
@@ -89,6 +91,12 @@ Orchestrates transfer proposal, input validation, and transaction tracking.
 | `registerTokenHolding` | `holdingId: string, definitionId: string, symbol: string, name: string, isShielded: bool` | Registers or updates a tracked token program holding in persistent storage. |
 | `getRequestStatus` | `requestId: string` | Queries current state of an action (`pending_approval`, `approved`, `rejected`, `submitted`, `cancelled`). |
 | `cancelRequest` | `requestId: string` | Cancels a pending request prior to execution. |
+
+#### Transfer Invariant & Pool-Aware Validation
+In compliance with the LEZ state model and LP-0021 specifications, `wallet_transfers::propose_native_transfer` enforces rigorous sanitization and pool-aware identity comparison:
+- **Prefix Sanitization:** Strips canonical `Public/` and `Private/` address prefixes to evaluate underlying 32-byte Base58 identifiers.
+- **Pool-Aware Self-Transfer Invariant:** Evaluates `clean_from == clean_to && from_is_priv == to_is_priv`. Intra-pool self-transfers are rejected immediately (`"Self-transfer within the same pool is not permitted"`), while cross-pool state transitions (such as public-to-private shielding or private-to-public deshielding) are cleanly admitted and delegated to the underlying engine.
+- **Zero Mock / Pure FFI Delegation:** All validated proposals dispatch directly to `lez_wallet_propose_native_transfer` in the Rust SDK engine without local mock fallbacks or dummy states.
 
 ### Domain 4: dApp Provider SDK & Session Security (`wallet_sessions`)
 Provides standard handshake protocols and granular, scoped access controls for external dApps and plugins.
