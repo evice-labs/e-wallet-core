@@ -89,6 +89,24 @@ std::string EWalletCoreImpl::openStorageFolder(const std::string& dataDir)
     return wallet_engine::open_storage_folder(dataDir.empty() ? m_dataDir : dataDir);
 }
 
+std::string EWalletCoreImpl::getGasLimit()
+{
+    return wallet_engine::get_gas_limit(m_engine);
+}
+
+std::string EWalletCoreImpl::setGasLimit(const std::string& limitStr)
+{
+    if (limitStr.empty()) {
+        return wallet_helpers::make_error_json("Gas limit cannot be empty");
+    }
+    try {
+        uint64_t limit = std::stoull(limitStr);
+        return wallet_engine::set_gas_limit(m_engine, limit);
+    } catch (const std::exception& e) {
+        return wallet_helpers::make_error_json("Invalid gas limit numeric format");
+    }
+}
+
 bool EWalletCoreImpl::isInitialized() const
 {
     return m_initialized && (m_engine != nullptr);
@@ -119,6 +137,11 @@ std::string EWalletCoreImpl::setAccountLabel(const std::string& accountId, const
 std::string EWalletCoreImpl::getBalance(const std::string& sessionId, const std::string& accountId)
 {
     return wallet_accounts::get_balance(m_engine, sessionId, accountId);
+}
+
+std::string EWalletCoreImpl::resolveAccount(const std::string& input)
+{
+    return wallet_accounts::resolve_account(m_engine, input);
 }
 
 // DOMAIN 3: ASSET TRANSFERS (DELEGATED TO WALLET_TRANSFERS)

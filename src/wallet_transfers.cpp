@@ -1,5 +1,7 @@
 #include "wallet_transfers.h"
 #include "wallet_helpers.h"
+#include <algorithm>
+#include <cctype>
 
 namespace wallet_transfers {
 
@@ -23,8 +25,22 @@ std::string propose_native_transfer(FfiSdkEngine* engine,
     if (amount_str.empty() || amount_str == "0") {
         return wallet_helpers::make_error_json("Transfer amount must be greater than zero");
     }
-    if (from_account == to_account_or_name) {
-        return wallet_helpers::make_error_json("Self-transfer is not permitted");
+
+    std::string lower_from = from_account;
+    std::string lower_to = to_account_or_name;
+    std::transform(lower_from.begin(), lower_from.end(), lower_from.begin(), ::tolower);
+    std::transform(lower_to.begin(), lower_to.end(), lower_to.begin(), ::tolower);
+
+    bool from_is_priv = (lower_from.rfind("private/", 0) == 0);
+    bool to_is_priv = (lower_to.rfind("private/", 0) == 0);
+
+    std::string clean_from = (lower_from.rfind("public/", 0) == 0) ? from_account.substr(7)
+                           : (from_is_priv ? from_account.substr(8) : from_account);
+    std::string clean_to = (lower_to.rfind("public/", 0) == 0) ? to_account_or_name.substr(7)
+                         : (to_is_priv ? to_account_or_name.substr(8) : to_account_or_name);
+
+    if (clean_from == clean_to) {
+        return wallet_helpers::make_error_json("Self-transfer to the same account is not permitted");
     }
 
     char* raw = lez_wallet_propose_native_transfer(engine,

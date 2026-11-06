@@ -35,6 +35,8 @@ public:
     std::string changePassword(const std::string& oldPassword, const std::string& newPassword);
     std::string getSdkInfo();
     std::string openStorageFolder(const std::string& dataDir);
+    std::string getGasLimit();
+    std::string setGasLimit(const std::string& limitStr);
     bool isInitialized() const;
 
     // Domain 2: Multi-Account Management (wallet_accounts)
@@ -43,6 +45,7 @@ public:
     std::string listAllAccounts();
     std::string setAccountLabel(const std::string& accountId, const std::string& label, bool isPrivate);
     std::string getBalance(const std::string& sessionId, const std::string& accountId);
+    std::string resolveAccount(const std::string& input);
 
     // Domain 3: Asset Transfers (wallet_transfers)
     std::string proposeNativeTransfer(const std::string& sessionId,

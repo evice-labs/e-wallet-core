@@ -51,4 +51,14 @@ std::string get_sdk_info(FfiSdkEngine* engine);
  */
 std::string open_storage_folder(const std::string& data_dir);
 
+/**
+ * @brief Retrieves the active transaction gas limit seed from the SDK.
+ */
+std::string get_gas_limit(FfiSdkEngine* engine);
+
+/**
+ * @brief Sets the transaction gas limit seed on the SDK.
+ */
+std::string set_gas_limit(FfiSdkEngine* engine, uint64_t limit);
+
 } // namespace wallet_engine
