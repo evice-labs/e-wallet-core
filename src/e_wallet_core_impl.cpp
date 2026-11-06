@@ -89,6 +89,24 @@ std::string EWalletCoreImpl::openStorageFolder(const std::string& dataDir)
     return wallet_engine::open_storage_folder(dataDir.empty() ? m_dataDir : dataDir);
 }
 
+std::string EWalletCoreImpl::getGasLimit()
+{
+    return wallet_engine::get_gas_limit(m_engine);
+}
+
+std::string EWalletCoreImpl::setGasLimit(const std::string& limitStr)
+{
+    if (limitStr.empty()) {
+        return wallet_helpers::make_error_json("Gas limit cannot be empty");
+    }
+    try {
+        uint64_t limit = std::stoull(limitStr);
+        return wallet_engine::set_gas_limit(m_engine, limit);
+    } catch (const std::exception& e) {
+        return wallet_helpers::make_error_json("Invalid gas limit numeric format");
+    }
+}
+
 bool EWalletCoreImpl::isInitialized() const
 {
     return m_initialized && (m_engine != nullptr);

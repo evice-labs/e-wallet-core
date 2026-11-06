@@ -107,4 +107,29 @@ std::string open_storage_folder(const std::string& data_dir) {
 #endif
 }
 
+std::string get_gas_limit(FfiSdkEngine* engine) {
+    if (!engine) {
+        return wallet_helpers::make_error_json("Wallet engine is not initialized");
+    }
+
+    uint64_t limit = lez_wallet_get_gas_limit(engine);
+    nlohmann::json res = {
+        {"ok", true},
+        {"gas_limit", limit}
+    };
+    return res.dump();
+}
+
+std::string set_gas_limit(FfiSdkEngine* engine, uint64_t limit) {
+    if (!engine) {
+        return wallet_helpers::make_error_json("Wallet engine is not initialized");
+    }
+    if (limit == 0) {
+        return wallet_helpers::make_error_json("Gas limit must be greater than zero");
+    }
+
+    char* raw = lez_wallet_set_gas_limit(engine, limit);
+    return wallet_helpers::consume_ffi_string(raw);
+}
+
 } // namespace wallet_engine

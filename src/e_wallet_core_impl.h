@@ -35,6 +35,8 @@ public:
     std::string changePassword(const std::string& oldPassword, const std::string& newPassword);
     std::string getSdkInfo();
     std::string openStorageFolder(const std::string& dataDir);
+    std::string getGasLimit();
+    std::string setGasLimit(const std::string& limitStr);
     bool isInitialized() const;
 
     // Domain 2: Multi-Account Management (wallet_accounts)
