@@ -88,6 +88,18 @@ void test_engine_lifecycle_and_accounts() {
     auto infoJson = json::parse(infoRes);
     assert(infoJson["ok"] == true);
 
+    // Verify Gas Limit Seed default and wrapper configuration
+    std::string gasRes = wallet.getGasLimit();
+    auto gasJson = json::parse(gasRes);
+    assert(gasJson["ok"] == true);
+    assert(gasJson["gas_limit"] == 34000);
+
+    std::string setGasRes = wallet.setGasLimit("50000");
+    auto setGasJson = json::parse(setGasRes);
+    assert(setGasJson["ok"] == true);
+    assert(json::parse(wallet.getGasLimit())["gas_limit"] == 50000);
+    assert(json::parse(wallet.setGasLimit("34000"))["ok"] == true);
+
     // Create fresh wallet
     std::string createRes = wallet.createWallet("testpass123");
     auto createJson = json::parse(createRes);
