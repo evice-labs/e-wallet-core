@@ -1,7 +1,5 @@
 #include "wallet_transfers.h"
 #include "wallet_helpers.h"
-#include <algorithm>
-#include <cctype>
 
 namespace wallet_transfers {
 
@@ -12,35 +10,6 @@ std::string propose_native_transfer(FfiSdkEngine* engine,
                                     const std::string& amount_str) {
     if (!engine) {
         return wallet_helpers::make_error_json("Wallet engine is not initialized");
-    }
-    if (session_id.empty()) {
-        return wallet_helpers::make_error_json("Session ID cannot be empty");
-    }
-    if (from_account.empty()) {
-        return wallet_helpers::make_error_json("Sender account cannot be empty");
-    }
-    if (to_account_or_name.empty()) {
-        return wallet_helpers::make_error_json("Destination account or name cannot be empty");
-    }
-    if (amount_str.empty() || amount_str == "0") {
-        return wallet_helpers::make_error_json("Transfer amount must be greater than zero");
-    }
-
-    std::string lower_from = from_account;
-    std::string lower_to = to_account_or_name;
-    std::transform(lower_from.begin(), lower_from.end(), lower_from.begin(), ::tolower);
-    std::transform(lower_to.begin(), lower_to.end(), lower_to.begin(), ::tolower);
-
-    bool from_is_priv = (lower_from.rfind("private/", 0) == 0);
-    bool to_is_priv = (lower_to.rfind("private/", 0) == 0);
-
-    std::string clean_from = (lower_from.rfind("public/", 0) == 0) ? from_account.substr(7)
-                           : (from_is_priv ? from_account.substr(8) : from_account);
-    std::string clean_to = (lower_to.rfind("public/", 0) == 0) ? to_account_or_name.substr(7)
-                         : (to_is_priv ? to_account_or_name.substr(8) : to_account_or_name);
-
-    if (clean_from == clean_to) {
-        return wallet_helpers::make_error_json("Self-transfer to the same account is not permitted");
     }
 
     char* raw = lez_wallet_propose_native_transfer(engine,
@@ -59,21 +28,6 @@ std::string propose_token_transfer(FfiSdkEngine* engine,
                                    const std::string& amount_str) {
     if (!engine) {
         return wallet_helpers::make_error_json("Wallet engine is not initialized");
-    }
-    if (session_id.empty()) {
-        return wallet_helpers::make_error_json("Session ID cannot be empty");
-    }
-    if (from_holding.empty() || to_holding.empty()) {
-        return wallet_helpers::make_error_json("Source and destination token holdings cannot be empty");
-    }
-    if (definition_id.empty()) {
-        return wallet_helpers::make_error_json("Token definition ID cannot be empty");
-    }
-    if (amount_str.empty() || amount_str == "0") {
-        return wallet_helpers::make_error_json("Transfer amount must be greater than zero");
-    }
-    if (from_holding == to_holding) {
-        return wallet_helpers::make_error_json("Self-transfer of token holdings is not permitted");
     }
 
     char* raw = lez_wallet_propose_token_transfer(engine,
@@ -149,6 +103,47 @@ std::string register_token_holding(FfiSdkEngine* engine,
                                                   symbol.c_str(),
                                                   name.c_str(),
                                                   is_shielded);
+    return wallet_helpers::consume_ffi_string(raw);
+}
+
+std::string start_pow_mining(FfiSdkEngine* engine, uint32_t threads) {
+    if (!engine) {
+        return wallet_helpers::make_error_json("Wallet engine is not initialized");
+    }
+
+    char* raw = lez_wallet_pow_start_mining(engine, threads);
+    return wallet_helpers::consume_ffi_string(raw);
+}
+
+std::string stop_pow_mining(FfiSdkEngine* engine) {
+    if (!engine) {
+        return wallet_helpers::make_error_json("Wallet engine is not initialized");
+    }
+
+    char* raw = lez_wallet_pow_stop_mining(engine);
+    return wallet_helpers::consume_ffi_string(raw);
+}
+
+std::string get_pow_status(FfiSdkEngine* engine) {
+    if (!engine) {
+        return wallet_helpers::make_error_json("Wallet engine is not initialized");
+    }
+
+    char* raw = lez_wallet_pow_status(engine);
+    return wallet_helpers::consume_ffi_string(raw);
+}
+
+std::string channel_deposit(FfiSdkEngine* engine,
+                            const std::string& account_id,
+                            const std::string& amount_str) {
+    if (!engine) {
+        return wallet_helpers::make_error_json("Wallet engine is not initialized");
+    }
+    if (account_id.empty()) {
+        return wallet_helpers::make_error_json("Recipient account ID cannot be empty");
+    }
+
+    char* raw = lez_wallet_channel_deposit(engine, account_id.c_str(), amount_str.c_str());
     return wallet_helpers::consume_ffi_string(raw);
 }
 

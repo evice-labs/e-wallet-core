@@ -77,4 +77,26 @@ std::string register_token_holding(FfiSdkEngine* engine,
                                    const std::string& name,
                                    bool is_shielded);
 
+/**
+ * @brief Starts EmPoWer PoW mining across `threads` worker threads and notifies L1 node (`PUT /pow/mining/start`).
+ */
+std::string start_pow_mining(FfiSdkEngine* engine, uint32_t threads);
+
+/**
+ * @brief Stops EmPoWer PoW mining and notifies L1 node (`PUT /pow/mining/stop`).
+ */
+std::string stop_pow_mining(FfiSdkEngine* engine);
+
+/**
+ * @brief Queries current EmPoWer PoW mining telemetry and unbridged L1 reward balance (`GET /pow/status`).
+ */
+std::string get_pow_status(FfiSdkEngine* engine);
+
+/**
+ * @brief Executes an L1 ➝ LEZ `channelDeposit` for a transparent `Public` account (`POST /channel/deposit`).
+ */
+std::string channel_deposit(FfiSdkEngine* engine,
+                            const std::string& account_id,
+                            const std::string& amount_str);
+
 } // namespace wallet_transfers

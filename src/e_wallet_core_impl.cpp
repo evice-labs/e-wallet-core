@@ -304,3 +304,27 @@ std::string EWalletCoreImpl::proposeContractCall(const std::string& sessionId,
     return wallet_contracts::propose_contract_call(m_engine, sessionId, programId, payerId, mentionsJson, calldataHex, description);
 }
 
+// DOMAIN 9: EMPOWER POW MINING & L1 -> LEZ CHANNEL BRIDGE
+
+std::string EWalletCoreImpl::startPowMining(uint64_t threads)
+{
+    uint32_t clamped = threads == 0 ? 4 : static_cast<uint32_t>(threads > 16 ? 16 : threads);
+    return wallet_transfers::start_pow_mining(m_engine, clamped);
+}
+
+std::string EWalletCoreImpl::stopPowMining()
+{
+    return wallet_transfers::stop_pow_mining(m_engine);
+}
+
+std::string EWalletCoreImpl::getPowStatus()
+{
+    return wallet_transfers::get_pow_status(m_engine);
+}
+
+std::string EWalletCoreImpl::channelDeposit(const std::string& accountId, const std::string& amountStr)
+{
+    return wallet_transfers::channel_deposit(m_engine, accountId, amountStr);
+}
+
+
