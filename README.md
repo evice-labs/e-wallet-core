@@ -93,9 +93,10 @@ Orchestrates transfer proposal, input validation, and transaction tracking.
 | `cancelRequest` | `requestId: string` | Cancels a pending request prior to execution. |
 
 #### Transfer Invariant & Pool-Aware Validation
-In compliance with the LEZ state model and LP-0021 specifications, `wallet_transfers::propose_native_transfer` enforces rigorous sanitization and pool-aware identity comparison:
-- **Prefix Sanitization:** Strips canonical `Public/` and `Private/` address prefixes to evaluate underlying 32-byte Base58 identifiers.
-- **Pool-Aware Self-Transfer Invariant:** Evaluates `clean_from == clean_to && from_is_priv == to_is_priv`. Intra-pool self-transfers are rejected immediately (`"Self-transfer within the same pool is not permitted"`), while cross-pool state transitions (such as public-to-private shielding or private-to-public deshielding) are cleanly admitted and delegated to the underlying engine.
+In compliance with the LEZ state model and LP-0021 specifications, `wallet_transfers::propose_native_transfer` adheres strictly to the single source of truth in `lez-wallet-sdk`:
+- **Direct Delegation:** Forwards `sessionId`, `fromAccount`, `toAccountOrName`, and `amountStr` directly to `lez_wallet_propose_native_transfer` without fragile redundant client-side string validations or domain-ignorant ID truncation.
+- **Pool-Aware Self-Transfer Invariant:** Evaluated natively inside the SDK Engine (`from == to_account && is_from_private == is_to_private`). Transfers within the same account and same privacy domain are rejected, while cross-pool transfers (shielding `Public ➝ Private` and deshielding `Private ➝ Public`) to addresses sharing a raw identifier are cleanly supported.
+- **Post-Transaction State Catch-up:** Private transaction inclusion on-chain triggers SDK block confirmation polling (`poller().poll_tx`) and key-chain state decryption (`follow_transaction`), automatically updating private account commitments and nullifiers in `wallet_storage.json`.
 - **Zero Mock / Pure FFI Delegation:** All validated proposals dispatch directly to `lez_wallet_propose_native_transfer` in the Rust SDK engine without local mock fallbacks or dummy states.
 
 ### Domain 4: dApp Provider SDK & Session Security (`wallet_sessions`)
@@ -146,6 +147,16 @@ Orchestrates generic and explicit smart contract calls with calldata dispatch an
 | :--- | :--- | :--- |
 | `proposeTransaction` | `sessionId: string, mentionsJson: string, calldataHex: string, description: string` | Proposes generic smart contract transaction with validated account mentions array and hex calldata; enqueues request with `pending_approval` status. |
 | `proposeContractCall` | `sessionId: string, programId: string, payerId: string, mentionsJson: string, calldataHex: string, description: string` | Proposes explicit smart contract execution targeting `programId` paid by `payerId`, binding signer and mention actor states. |
+
+### Domain 9: EmPoWer Proof-of-Work Mining & L1 ➝ LEZ Channel Bridge (`wallet_transfers`)
+Provides native host-level EmPoWer PoW mining telemetry, daemon orchestration, and L1-to-LEZ channel deposit bridging so `ui_qml` modules never make direct network calls inside Logos Basecamp's sandbox.
+
+| Method | Parameters | Description |
+| :--- | :--- | :--- |
+| `startPowMining` | *(none)* | Starts EmPoWer PoW mining via `lez_wallet_pow_start_mining` (`PUT /pow/mining/start`, `PUT /pow/auto-claim/start`, and background SHA-256 PoW solver). |
+| `stopPowMining` | *(none)* | Stops EmPoWer PoW mining via `lez_wallet_pow_stop_mining` (`PUT /pow/mining/stop`). |
+| `getPowStatus` | *(none)* | Queries live mining telemetry (`is_mining`, `hash_rate`, `blocks_mined`, `unbridged_l1_balance`) via `lez_wallet_pow_status`. |
+| `channelDeposit` | `recipientAccount: string, amountStr: string` | Bridges L1 rewards into a Transparent/Public LEZ account via `lez_wallet_channel_deposit` (`POST /pow/claim`, `POST /channel/deposit`, and on-chain LEZ settlement) while enforcing the Asymmetric Deposit Trap guardrail. |
 
 
 ## 3. Vendored Libraries & Dependency Resolution

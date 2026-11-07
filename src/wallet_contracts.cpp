@@ -13,42 +13,6 @@ std::string propose_transaction(FfiSdkEngine* engine,
     if (!engine) {
         return wallet_helpers::make_error_json("Engine is not initialized");
     }
-    if (sessionId.empty()) {
-        return wallet_helpers::make_error_json("Session ID cannot be empty");
-    }
-    if (mentionsJson.empty()) {
-        return wallet_helpers::make_error_json("Mentions JSON cannot be empty");
-    }
-    if (calldataHex.empty()) {
-        return wallet_helpers::make_error_json("Calldata hex cannot be empty");
-    }
-
-    // Validate mentions JSON structure
-    nlohmann::json parsedMentions;
-    try {
-        parsedMentions = nlohmann::json::parse(mentionsJson);
-    } catch (const std::exception& e) {
-        return wallet_helpers::make_error_json(std::string("Malformed mentions JSON: ") + e.what());
-    }
-
-    if (!parsedMentions.is_array()) {
-        return wallet_helpers::make_error_json("Mentions JSON must be an array of account ID strings");
-    }
-
-    for (size_t i = 0; i < parsedMentions.size(); ++i) {
-        if (!parsedMentions[i].is_string()) {
-            return wallet_helpers::make_error_json("Mention item at index " + std::to_string(i) + " must be a string");
-        }
-        if (parsedMentions[i].get<std::string>().empty()) {
-            return wallet_helpers::make_error_json("Mention item at index " + std::to_string(i) + " cannot be empty");
-        }
-    }
-
-    // Validate calldata hex format
-    std::vector<uint8_t> calldataBytes;
-    if (!wallet_helpers::hex_to_bytes(calldataHex, calldataBytes)) {
-        return wallet_helpers::make_error_json("Invalid calldata hex format");
-    }
 
     const char* descPtr = description.empty() ? nullptr : description.c_str();
 
@@ -72,32 +36,6 @@ std::string propose_contract_call(FfiSdkEngine* engine,
 {
     if (!engine) {
         return wallet_helpers::make_error_json("Engine is not initialized");
-    }
-    if (sessionId.empty()) {
-        return wallet_helpers::make_error_json("Session ID cannot be empty");
-    }
-    if (programId.empty()) {
-        return wallet_helpers::make_error_json("Program ID cannot be empty");
-    }
-    if (payerId.empty()) {
-        return wallet_helpers::make_error_json("Payer ID cannot be empty");
-    }
-    if (mentionsJson.empty()) {
-        return wallet_helpers::make_error_json("Mentions JSON cannot be empty");
-    }
-    if (calldataHex.empty()) {
-        return wallet_helpers::make_error_json("Calldata hex cannot be empty");
-    }
-
-    nlohmann::json parsedMentions;
-    try {
-        parsedMentions = nlohmann::json::parse(mentionsJson);
-    } catch (const std::exception& e) {
-        return wallet_helpers::make_error_json(std::string("Malformed mentions JSON: ") + e.what());
-    }
-
-    if (!parsedMentions.is_array()) {
-        return wallet_helpers::make_error_json("Mentions JSON must be an array of account ID strings");
     }
 
     const char* descPtr = description.empty() ? nullptr : description.c_str();
