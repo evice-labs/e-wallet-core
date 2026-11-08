@@ -1,5 +1,5 @@
 {
-  description = "Logos Basecamp core module wrapping LEZ Wallet SDK";
+  description = "Logos Basecamp core module wrapping Evice Wallet SDK";
 
   inputs = {
     logos-module-builder.url = "github:logos-co/logos-module-builder";
