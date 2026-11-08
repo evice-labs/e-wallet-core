@@ -72,6 +72,18 @@ std::string simulate_prompt_effect(const std::string& prompt_json) {
             humanDesc += summary;
         }
 
+        json simDetails = {
+            {"request_id", reqId},
+            {"session_id", sessId},
+            {"dapp_identity", dapp},
+            {"request_kind", kind},
+            {"summary", summary},
+            {"effects", effects},
+            {"verification_status", verStatus},
+            {"warnings", warnings},
+            {"human_description", humanDesc}
+        };
+
         json simulated = {
             {"ok", true},
             {"request_id", reqId},
@@ -82,7 +94,8 @@ std::string simulate_prompt_effect(const std::string& prompt_json) {
             {"effects", effects},
             {"verification_status", verStatus},
             {"warnings", warnings},
-            {"human_description", humanDesc}
+            {"human_description", humanDesc},
+            {"simulation", simDetails}
         };
 
         return simulated.dump();

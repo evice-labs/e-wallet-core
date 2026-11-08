@@ -70,14 +70,6 @@ std::string resolve_name(FfiSdkEngine* engine,
     if (!engine) {
         return wallet_helpers::make_error_json("Engine is not initialized");
     }
-    if (sessionId.empty()) {
-        return wallet_helpers::make_error_json("Session ID cannot be empty");
-    }
-
-    std::string validationError;
-    if (!validate_lns_name(name, validationError)) {
-        return wallet_helpers::make_error_json(validationError);
-    }
 
     char* raw = lez_wallet_resolve_name(engine, sessionId.c_str(), name.c_str());
     return wallet_helpers::consume_ffi_string(raw);

@@ -102,6 +102,12 @@ public:
                                     const std::string& calldataHex,
                                     const std::string& description);
 
+    // Domain 9: EmPoWer PoW Mining & L1 -> LEZ Channel Bridge
+    std::string startPowMining(uint64_t threads);
+    std::string stopPowMining();
+    std::string getPowStatus();
+    std::string channelDeposit(const std::string& accountId, const std::string& amountStr);
+
 protected:
     // In-process host & test hook for C-ABI callback registration (not an RPC wire method)
     std::string setApprovalCallback(FfiApprovalCallback callback, void* userData);
