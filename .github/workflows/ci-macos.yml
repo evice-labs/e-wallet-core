@@ -29,5 +29,5 @@ jobs:
       # symbols are left for load time), so check that it actually loads.
       - name: Check the plugin loads with the bundled SDK
         run: |
-          file -L result/lib/liblez_wallet_sdk.dylib | grep -q 'Mach-O 64-bit dynamically linked shared library arm64'
+          file -L result/lib/libe_wallet_sdk.dylib | grep -q 'Mach-O 64-bit dynamically linked shared library arm64'
           python3 -c 'import ctypes; ctypes.CDLL("result/lib/e_wallet_core_plugin.dylib"); print("plugin loads")'
