@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       testnet_rpc:
-        description: 'LEZ Sequencer Testnet RPC Endpoint'
+        description: "LEZ Sequencer Testnet RPC Endpoint"
         required: false
-        default: 'https://testnet.lez.logos.co'
+        default: "https://testnet.lez.logos.co"
   schedule:
-    - cron: '0 6 * * 1' # Weekly Monday 06:00 UTC
+    - cron: "0 6 * * 1" # Weekly Monday 06:00 UTC
 
 permissions:
   contents: read
@@ -32,19 +32,19 @@ jobs:
       - name: Verify Live LEZ Testnet Sequencer Connectivity & State
         run: |
           echo "Connecting to LEZ Testnet Sequencer at: ${LEZ_TESTNET_RPC}"
-          
+
           # 1. Check Sequencer Health
           HEALTH_RESP=$(curl -s -f -X POST "${LEZ_TESTNET_RPC}" \
             -H "Content-Type: application/json" \
             -d '{"jsonrpc":"2.0","method":"checkHealth","params":{},"id":1}')
           echo "Health response: ${HEALTH_RESP}"
-          
+
           # 2. Query Latest Block ID
           BLOCK_RESP=$(curl -s -f -X POST "${LEZ_TESTNET_RPC}" \
             -H "Content-Type: application/json" \
             -d '{"jsonrpc":"2.0","method":"getLastBlockId","params":[],"id":2}')
           echo "Latest block response: ${BLOCK_RESP}"
-          
+
           # 3. Query Fee State & Limits
           FEE_RESP=$(curl -s -f -X POST "${LEZ_TESTNET_RPC}" \
             -H "Content-Type: application/json" \
@@ -53,15 +53,15 @@ jobs:
 
       - name: Verify Vendored C-ABI FFI Dynamic Symbols
         run: |
-          nm -D lib/x86_64-linux/liblez_wallet_sdk.so | grep -q "lez_wallet_engine_new" || {
+          nm -D lib/x86_64-linux/libe_wallet_sdk.so | grep -q "e_wallet_engine_new" || {
             echo "Error: Required FFI symbols not found in vendored library"
             exit 1
           }
-          nm -D lib/x86_64-linux/liblez_wallet_sdk.so | grep -q "lez_wallet_resolve_name" || {
+          nm -D lib/x86_64-linux/libe_wallet_sdk.so | grep -q "e_wallet_resolve_name" || {
             echo "Error: LNS resolver FFI symbol missing"
             exit 1
           }
-          nm -D lib/x86_64-linux/liblez_wallet_sdk.so | grep -q "lez_wallet_request_identity_access" || {
+          nm -D lib/x86_64-linux/libe_wallet_sdk.so | grep -q "e_wallet_request_identity_access" || {
             echo "Error: Identity FFI symbol missing"
             exit 1
           }
@@ -74,5 +74,5 @@ jobs:
       - name: Execute Full Integration Test Suite on Testnet Target
         run: |
           nix develop --command bash -c "g++ -std=c++20 tests/test_e_wallet_core.cpp src/*.cpp \
-            -Isrc -Ilib -I\$LOGOS_CPP_SDK_ROOT/include -Llib/x86_64-linux -llez_wallet_sdk -lpcsclite \
+            -Isrc -Ilib -I\$LOGOS_CPP_SDK_ROOT/include -Llib/x86_64-linux -le_wallet_sdk -lpcsclite \
             -Wl,-rpath,lib/x86_64-linux -o tests/test_e_wallet_core_runner && ./tests/test_e_wallet_core_runner && rm tests/test_e_wallet_core_runner"

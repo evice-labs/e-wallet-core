@@ -40,7 +40,7 @@ logos_module(
         src/wallet_contracts.cpp
         src/wallet_helpers.h
     EXTERNAL_LIBS
-        lez_wallet_sdk
+        e_wallet_sdk
     LINK_LIBRARIES
         pcsclite
 )

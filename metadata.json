@@ -5,7 +5,7 @@
   "type": "core",
   "interface": "universal",
   "category": "wallet",
-  "description": "Logos Basecamp core module wrapping LEZ Wallet SDK",
+  "description": "Logos Basecamp core module wrapping Evice Wallet SDK",
   "main": "e_wallet_core_plugin",
   "codegen": {
     "impl_header": "src/e_wallet_core_impl.h",
@@ -14,36 +14,21 @@
   "dependencies": [],
   "nix": {
     "packages": {
-      "build": [
-        "nlohmann_json",
-        "pcsclite"
-      ],
-      "runtime": [
-        "nlohmann_json",
-        "pcsclite.lib"
-      ]
+      "build": ["nlohmann_json", "pcsclite"],
+      "runtime": ["nlohmann_json", "pcsclite.lib"]
     },
     "external_libraries": [
       {
-        "name": "lez_wallet_sdk",
+        "name": "e_wallet_sdk",
         "vendor_path": "lib"
       }
     ],
     "cmake": {
-      "find_packages": [
-        "nlohmann_json"
-      ],
+      "find_packages": ["nlohmann_json"],
       "extra_sources": [],
-      "extra_include_dirs": [
-        "lib"
-      ],
-      "extra_link_libraries": [
-        "pcsclite"
-      ]
+      "extra_include_dirs": ["lib"],
+      "extra_link_libraries": ["pcsclite"]
     }
   },
-  "include": [
-    "libpcsclite.so.1",
-    "libpcsclite.so"
-  ]
+  "include": ["libpcsclite.so.1", "libpcsclite.so"]
 }

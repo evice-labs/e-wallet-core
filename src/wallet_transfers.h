@@ -1,12 +1,13 @@
 #pragma once
 
+#include "../lib/e_wallet_sdk.h"
 #include <string>
-#include "../lib/lez_wallet_sdk.h"
 
 namespace wallet_transfers {
 
 /**
- * @brief Proposes a native LEZ asset transfer (supports transparent/shielded accounts and .lez names).
+ * @brief Proposes a native LEZ asset transfer (supports transparent/shielded
+ * accounts and .lez names).
  *
  * @param engine Pointer to the active SdkEngine instance.
  * @param session_id Authorized dApp session ID holding 'propose' access.
@@ -15,11 +16,11 @@ namespace wallet_transfers {
  * @param amount_str Amount to transfer as string.
  * @return JSON containing request_id or error details.
  */
-std::string propose_native_transfer(FfiSdkEngine* engine,
-                                    const std::string& session_id,
-                                    const std::string& from_account,
-                                    const std::string& to_account_or_name,
-                                    const std::string& amount_str);
+std::string propose_native_transfer(FfiSdkEngine *engine,
+                                    const std::string &session_id,
+                                    const std::string &from_account,
+                                    const std::string &to_account_or_name,
+                                    const std::string &amount_str);
 
 /**
  * @brief Proposes a fungible token program asset transfer.
@@ -32,21 +33,24 @@ std::string propose_native_transfer(FfiSdkEngine* engine,
  * @param amount_str Amount to transfer as string.
  * @return JSON containing request_id or error details.
  */
-std::string propose_token_transfer(FfiSdkEngine* engine,
-                                   const std::string& session_id,
-                                   const std::string& from_holding,
-                                   const std::string& to_holding,
-                                   const std::string& definition_id,
-                                   const std::string& amount_str);
+std::string propose_token_transfer(FfiSdkEngine *engine,
+                                   const std::string &session_id,
+                                   const std::string &from_holding,
+                                   const std::string &to_holding,
+                                   const std::string &definition_id,
+                                   const std::string &amount_str);
 
 /**
- * @brief Queries the execution / approval status of a proposed transfer request.
+ * @brief Queries the execution / approval status of a proposed transfer
+ * request.
  *
  * @param engine Pointer to the active SdkEngine instance.
  * @param request_id Unique request ID.
- * @return JSON containing request status ('pending', 'approved', 'rejected', etc.).
+ * @return JSON containing request status ('pending', 'approved', 'rejected',
+ * etc.).
  */
-std::string get_request_status(FfiSdkEngine* engine, const std::string& request_id);
+std::string get_request_status(FfiSdkEngine *engine,
+                               const std::string &request_id);
 
 /**
  * @brief Cancels a pending request prior to user approval.
@@ -55,48 +59,51 @@ std::string get_request_status(FfiSdkEngine* engine, const std::string& request_
  * @param request_id Unique request ID to cancel.
  * @return JSON indicating cancellation success or error.
  */
-std::string cancel_request(FfiSdkEngine* engine, const std::string& request_id);
+std::string cancel_request(FfiSdkEngine *engine, const std::string &request_id);
 
 /**
  * @brief Lists tracked token holdings accessible to the session.
  */
-std::string list_token_holdings(FfiSdkEngine* engine, const std::string& session_id);
+std::string list_token_holdings(FfiSdkEngine *engine,
+                                const std::string &session_id);
 
 /**
  * @brief Privileged Owner API: Lists all tracked token holdings in the wallet.
  */
-std::string list_all_token_holdings(FfiSdkEngine* engine);
+std::string list_all_token_holdings(FfiSdkEngine *engine);
 
 /**
  * @brief Privileged Owner API: Registers or updates a tracked token holding.
  */
-std::string register_token_holding(FfiSdkEngine* engine,
-                                   const std::string& holding_id,
-                                   const std::string& definition_id,
-                                   const std::string& symbol,
-                                   const std::string& name,
-                                   bool is_shielded);
+std::string register_token_holding(FfiSdkEngine *engine,
+                                   const std::string &holding_id,
+                                   const std::string &definition_id,
+                                   const std::string &symbol,
+                                   const std::string &name, bool is_shielded);
 
 /**
- * @brief Starts EmPoWer PoW mining across `threads` worker threads and notifies L1 node (`PUT /pow/mining/start`).
+ * @brief Starts EmPoWer PoW mining across `threads` worker threads and notifies
+ * L1 node (`PUT /pow/mining/start`).
  */
-std::string start_pow_mining(FfiSdkEngine* engine, uint32_t threads);
+std::string start_pow_mining(FfiSdkEngine *engine, uint32_t threads);
 
 /**
- * @brief Stops EmPoWer PoW mining and notifies L1 node (`PUT /pow/mining/stop`).
+ * @brief Stops EmPoWer PoW mining and notifies L1 node (`PUT
+ * /pow/mining/stop`).
  */
-std::string stop_pow_mining(FfiSdkEngine* engine);
+std::string stop_pow_mining(FfiSdkEngine *engine);
 
 /**
- * @brief Queries current EmPoWer PoW mining telemetry and unbridged L1 reward balance (`GET /pow/status`).
+ * @brief Queries current EmPoWer PoW mining telemetry and unbridged L1 reward
+ * balance (`GET /pow/status`).
  */
-std::string get_pow_status(FfiSdkEngine* engine);
+std::string get_pow_status(FfiSdkEngine *engine);
 
 /**
- * @brief Executes an L1 ➝ LEZ `channelDeposit` for a transparent `Public` account (`POST /channel/deposit`).
+ * @brief Executes an L1 ➝ LEZ `channelDeposit` for a transparent `Public`
+ * account (`POST /channel/deposit`).
  */
-std::string channel_deposit(FfiSdkEngine* engine,
-                            const std::string& account_id,
-                            const std::string& amount_str);
+std::string channel_deposit(FfiSdkEngine *engine, const std::string &account_id,
+                            const std::string &amount_str);
 
 } // namespace wallet_transfers
