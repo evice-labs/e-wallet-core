@@ -1,7 +1,7 @@
 {
   "name": "e_wallet_core",
   "display_name": "e-wallet-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "core",
   "interface": "universal",
   "category": "wallet",
