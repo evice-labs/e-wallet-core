@@ -143,4 +143,17 @@ std::string channel_deposit(FfiSdkEngine *engine, const std::string &account_id,
   return wallet_helpers::consume_ffi_string(raw);
 }
 
+std::string get_transaction_status(FfiSdkEngine *engine,
+                                   const std::string &tx_hash) {
+  if (!engine) {
+    return wallet_helpers::make_error_json("Wallet engine is not initialized");
+  }
+  if (tx_hash.empty()) {
+    return wallet_helpers::make_error_json("Transaction hash cannot be empty");
+  }
+
+  char *raw = e_wallet_get_transaction_status(engine, tx_hash.c_str());
+  return wallet_helpers::consume_ffi_string(raw);
+}
+
 } // namespace wallet_transfers

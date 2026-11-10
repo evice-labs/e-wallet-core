@@ -106,4 +106,10 @@ std::string get_pow_status(FfiSdkEngine *engine);
 std::string channel_deposit(FfiSdkEngine *engine, const std::string &account_id,
                             const std::string &amount_str);
 
+/**
+ * @brief Queries on-chain status of a transaction by hash.
+ */
+std::string get_transaction_status(FfiSdkEngine *engine,
+                                   const std::string &tx_hash);
+
 } // namespace wallet_transfers

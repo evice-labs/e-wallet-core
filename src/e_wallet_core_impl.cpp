@@ -157,6 +157,10 @@ std::string EWalletCoreImpl::getRequestStatus(const std::string &requestId) {
   return wallet_transfers::get_request_status(m_engine, requestId);
 }
 
+std::string EWalletCoreImpl::getTransactionStatus(const std::string &txHash) {
+  return wallet_transfers::get_transaction_status(m_engine, txHash);
+}
+
 std::string EWalletCoreImpl::cancelRequest(const std::string &requestId) {
   return wallet_transfers::cancel_request(m_engine, requestId);
 }

@@ -64,6 +64,7 @@ public:
                                    const std::string &definitionId,
                                    const std::string &amountStr);
   std::string getRequestStatus(const std::string &requestId);
+  std::string getTransactionStatus(const std::string &txHash);
   std::string cancelRequest(const std::string &requestId);
   std::string listTokenHoldings(const std::string &sessionId);
   std::string listAllTokenHoldings();
