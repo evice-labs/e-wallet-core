@@ -95,12 +95,14 @@ Orchestrates transfer proposal, input validation, and transaction tracking.
 | `registerTokenHolding`  | `holdingId: string, definitionId: string, symbol: string, name: string, isShielded: bool`            | Registers or updates a tracked token program holding in persistent storage.                                               |
 | `getRequestStatus`      | `requestId: string`                                                                                  | Queries current state of an action (`pending_approval`, `approved`, `rejected`, `submitted`, `cancelled`).                |
 | `cancelRequest`         | `requestId: string`                                                                                  | Cancels a pending request prior to execution.                                                                             |
+| `getTransactionStatus`  | `txHash: string`                                                                                     | Queries on-chain inclusion status of a transaction (`pending` or `confirmed` with `block_id`) via `e_wallet_get_transaction_status`. |
 
 #### Transfer Invariant & Pool-Aware Validation
 
 In compliance with the LEZ state model and LP-0021 specifications, `wallet_transfers::propose_native_transfer` adheres strictly to the single source of truth in `lez-wallet-sdk`:
 
 - **Direct Delegation:** Forwards `sessionId`, `fromAccount`, `toAccountOrName`, and `amountStr` directly to `e_wallet_propose_native_transfer` without fragile redundant client-side string validations or domain-ignorant ID truncation.
+- **Protocol-Adaptive Transaction Status Query (`getTransactionStatus`):** Dispatches directly to `e_wallet_get_transaction_status` to query sequencer inclusion by 32-byte hex hash. This allows the host UI (QML) to reconcile transaction lifecycle states natively via module IPC without violating Basecamp's zero-network sandbox boundaries.
 - **Pool-Aware Self-Transfer Invariant:** Evaluated natively inside the SDK Engine (`from == to_account && is_from_private == is_to_private`). Transfers within the same account and same privacy domain are rejected, while cross-pool transfers (shielding `Public ➝ Private` and deshielding `Private ➝ Public`) to addresses sharing a raw identifier are cleanly supported.
 - **Post-Transaction State Catch-up:** Private transaction inclusion on-chain triggers SDK block confirmation polling (`poller().poll_tx`) and key-chain state decryption (`follow_transaction`), automatically updating private account commitments and nullifiers in `wallet_storage.json`.
 - **Zero Mock / Pure FFI Delegation:** All validated proposals dispatch directly to `e_wallet_propose_native_transfer` in the Rust SDK engine without local mock fallbacks or dummy states.
