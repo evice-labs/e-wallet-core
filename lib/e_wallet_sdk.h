@@ -353,6 +353,12 @@ char *e_wallet_channel_deposit(struct FfiSdkEngine *engine,
                                const char *recipient_account_id,
                                const char *amount_str);
 
+/**
+ * Query on-chain status of a transaction by its 32-byte hex hash.
+ */
+char *e_wallet_get_transaction_status(struct FfiSdkEngine *engine,
+                                      const char *tx_hash);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus
