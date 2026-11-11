@@ -16,6 +16,12 @@ endif()
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/metadata.json" METADATA_JSON)
 string(JSON MODULE_NAME GET ${METADATA_JSON} name)
 
+if(WIN32)
+    set(SMARTCARD_LIB winscard)
+else()
+    set(SMARTCARD_LIB pcsclite)
+endif()
+
 # Define the module with external library
 logos_module(
     NAME ${MODULE_NAME}
@@ -42,5 +48,5 @@ logos_module(
     EXTERNAL_LIBS
         e_wallet_sdk
     LINK_LIBRARIES
-        pcsclite
+        ${SMARTCARD_LIB}
 )
