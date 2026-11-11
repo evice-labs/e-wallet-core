@@ -48,6 +48,16 @@
         }
       },
       {
+        "when": { "os": "darwin" },
+        "packages": {
+          "build": ["pcsclite"],
+          "runtime": ["pcsclite.lib"]
+        },
+        "cmake": {
+          "extra_link_libraries": ["pcsclite"]
+        }
+      },
+      {
         "when": { "os": "windows" },
         "cmake": {
           "extra_link_libraries": ["winscard"]
