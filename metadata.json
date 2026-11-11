@@ -5,7 +5,7 @@
   "type": "core",
   "interface": "universal",
   "category": "wallet",
-  "description": "Logos Basecamp core module wrapping Evice Wallet SDK",
+  "description": "Wallez module wrapping Evice Wallet SDK.",
   "main": "e_wallet_core_plugin",
   "codegen": {
     "impl_header": "src/e_wallet_core_impl.h",
