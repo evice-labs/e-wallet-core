@@ -12,8 +12,11 @@ e-wallet-core/
 │   ├── e_wallet_sdk.h          # C-ABI header definitions from Rust SDK
 │   ├── x86_64-linux/
 │   │   └── libe_wallet_sdk.so      # Pre-compiled C-ABI shared library (Linux x86-64)
-│   └── aarch64-darwin/
-│       └── libe_wallet_sdk.dylib   # Pre-compiled C-ABI shared library (macOS Apple Silicon)
+│   ├── aarch64-darwin/
+│   │   └── libe_wallet_sdk.dylib   # Pre-compiled C-ABI shared library (macOS Apple Silicon)
+│   └── x86_64-windows/
+│       ├── e_wallet_sdk.dll        # Pre-compiled C-ABI dynamic library (Windows x86-64)
+│       └── libe_wallet_sdk.dll.a   # MinGW import library (Windows x86-64)
 ├── src/
 │   ├── e_wallet_core_impl.h      # Master Coordinator class declaration (LogosModuleContext)
 │   ├── e_wallet_core_impl.cpp    # Master Coordinator implementation (API routing & lifecycle)
