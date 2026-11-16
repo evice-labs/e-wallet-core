@@ -126,13 +126,14 @@ Provides standard handshake protocols and granular, scoped access controls for e
 
 ### Domain 5: Interactive Approvals & Plain-Language Effect Simulation (`wallet_approval`)
 
-Implements human-in-the-loop security, providing clear previews of transaction consequences before signing.
+Implements human-in-the-loop security, providing thread-safe deferred approval queuing and clear previews of transaction consequences before signing.
 
-| Method                                           | Parameters                                       | Description                                                                                                               |
-| :----------------------------------------------- | :----------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------ |
-| `submitApprovalDecision`                         | `requestId: string, decision: int64`             | Resolves deferred modal approval (`1` for Approve, `0` for Reject).                                                       |
-| `simulatePromptEffect`                           | `promptJson: string`                             | Synthesizes plain-language summary of intent, caller identity, target assets, verification status, and security warnings. |
-| `setApprovalCallback` _(protected / in-process)_ | `callback: FfiApprovalCallback, userData: void*` | In-process C-ABI hook for host UI callback registration (`1` = Approve, `0` = Reject, `-1` = Deferred Prompt).            |
+| Method                                           | Parameters                                       | Description                                                                                                                                                              |
+| :----------------------------------------------- | :----------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `listPendingApprovals`                           | _(none)_                                         | Returns `{ "ok": true, "prompts": [...] }` containing all active deferred dApp approval prompts captured by the engine's default approval callback queue.                |
+| `submitApprovalDecision`                         | `requestId: string, decision: int64`             | Resolves deferred modal approval (`1` for Approve, `0` for Reject) and removes the resolved request from the in-memory pending approvals queue.                          |
+| `simulatePromptEffect`                           | `promptJson: string`                             | Synthesizes plain-language summary of intent, caller identity (`dapp_name` / `dapp_identity`), state diff (`effects`), gas fee, verification status, and warnings.       |
+| `setApprovalCallback` _(protected / in-process)_ | `callback: FfiApprovalCallback, userData: void*` | In-process C-ABI hook for host UI callback registration (`1` = Approve, `0` = Reject, `-1` = Deferred Prompt). Registered automatically on `initEngine` via `default_approval_callback`. |
 
 ### Domain 6: Identity Accountability & Accountable Pseudonymity (`wallet_identity`)
 
