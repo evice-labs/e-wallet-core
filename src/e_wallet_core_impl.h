@@ -86,6 +86,7 @@ public:
   std::string revokeSession(const std::string &sessionId);
 
   // Domain 5: Interactive Approvals & Effect Simulation (wallet_approval)
+  std::string listPendingApprovals();
   std::string submitApprovalDecision(const std::string &requestId,
                                      int64_t decision);
   std::string simulatePromptEffect(const std::string &promptJson);

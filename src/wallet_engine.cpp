@@ -1,4 +1,5 @@
 #include "wallet_engine.h"
+#include "wallet_approval.h"
 #include "wallet_helpers.h"
 
 namespace wallet_engine {
@@ -16,15 +17,21 @@ FfiSdkEngine *init_engine(const std::string &data_dir,
     return nullptr;
   }
 
+  FfiSdkEngine *engine = nullptr;
   if (password.empty()) {
-    return e_wallet_engine_new(data_dir.c_str());
+    engine = e_wallet_engine_new(data_dir.c_str());
   } else {
-    return e_wallet_engine_new_with_password(data_dir.c_str(),
-                                             password.c_str());
+    engine =
+        e_wallet_engine_new_with_password(data_dir.c_str(), password.c_str());
   }
+  if (engine) {
+    wallet_approval::register_default_callback(engine);
+  }
+  return engine;
 }
 
 void destroy_engine(FfiSdkEngine *engine) {
+  wallet_approval::clear_pending_approvals();
   if (engine) {
     e_wallet_engine_free(engine);
   }
@@ -64,6 +71,7 @@ std::string lock_wallet(FfiSdkEngine *engine) {
     return wallet_helpers::make_error_json("Wallet engine is not initialized");
   }
 
+  wallet_approval::clear_pending_approvals();
   char *raw = e_wallet_lock(engine);
   return wallet_helpers::consume_ffi_string(raw);
 }

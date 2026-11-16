@@ -162,6 +162,10 @@ std::string EWalletCoreImpl::getTransactionStatus(const std::string &txHash) {
 }
 
 std::string EWalletCoreImpl::cancelRequest(const std::string &requestId) {
+  wallet_approval::remove_pending_approval(requestId);
+  if (m_engine && !requestId.empty()) {
+    wallet_approval::submit_approval_decision(m_engine, requestId, 0);
+  }
   return wallet_transfers::cancel_request(m_engine, requestId);
 }
 
@@ -216,6 +220,10 @@ std::string EWalletCoreImpl::revokeSession(const std::string &sessionId) {
 
 // DOMAIN 5: INTERACTIVE APPROVALS & EFFECT SIMULATION (DELEGATED TO
 // WALLET_APPROVAL)
+
+std::string EWalletCoreImpl::listPendingApprovals() {
+  return wallet_approval::list_pending_approvals();
+}
 
 std::string EWalletCoreImpl::setApprovalCallback(FfiApprovalCallback callback,
                                                  void *userData) {

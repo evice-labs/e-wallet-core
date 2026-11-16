@@ -8,6 +8,33 @@
 namespace wallet_approval {
 
 /**
+ * @brief Registers the default in-memory approval queue callback on the engine
+ * so external dApp transaction proposals are queued for Basecamp UI approval.
+ *
+ * @param engine Pointer to the active SdkEngine instance.
+ */
+void register_default_callback(FfiSdkEngine *engine);
+
+/**
+ * @brief Returns all pending external dApp approval prompts in FIFO order.
+ *
+ * @return JSON array of pending prompt objects (`{"ok": true, "prompts":
+ * [...]}`).
+ */
+std::string list_pending_approvals();
+
+/**
+ * @brief Clears all pending approval prompts (e.g., on wallet lock or engine
+ * reset).
+ */
+void clear_pending_approvals();
+
+/**
+ * @brief Removes a specific pending approval prompt by request ID.
+ */
+void remove_pending_approval(const std::string &request_id);
+
+/**
  * @brief Registers a C-ABI approval callback for interactive prompt handling in
  * Basecamp UI.
  *
