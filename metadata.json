@@ -1,7 +1,7 @@
 {
   "name": "e_wallet_core",
   "display_name": "Wallez Module",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "type": "core",
   "interface": "universal",
   "category": "wallet",
