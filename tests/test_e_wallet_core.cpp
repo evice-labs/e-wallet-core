@@ -3,10 +3,181 @@
 #include <filesystem>
 #include <chrono>
 #include <thread>
+#include <atomic>
+#include <cctype>
+#include <cstring>
+#include <fstream>
+#include <string>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include <nlohmann/json.hpp>
 #include "e_wallet_core_impl.h"
 
 using json = nlohmann::json;
+
+static std::string g_mockRpcUrl;
+
+class MockRpcServer {
+public:
+    MockRpcServer() {
+        listenFd_ = ::socket(AF_INET, SOCK_STREAM, 0);
+        assert(listenFd_ >= 0);
+
+        int opt = 1;
+        ::setsockopt(listenFd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+        timeval tv{};
+        tv.tv_usec = 200000; // 200ms timeout so accept() checks running_ cleanly
+        ::setsockopt(listenFd_, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
+        sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(0);
+        addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        assert(::bind(listenFd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == 0);
+        assert(::listen(listenFd_, 16) == 0);
+
+        socklen_t len = sizeof(addr);
+        assert(::getsockname(listenFd_, reinterpret_cast<sockaddr*>(&addr), &len) == 0);
+        url_ = "http://127.0.0.1:" + std::to_string(ntohs(addr.sin_port));
+
+        running_ = true;
+        serverThread_ = std::thread(&MockRpcServer::serveLoop, this);
+    }
+
+    ~MockRpcServer() {
+        running_ = false;
+        if (listenFd_ >= 0) {
+            ::shutdown(listenFd_, SHUT_RDWR);
+            ::close(listenFd_);
+            listenFd_ = -1;
+        }
+        if (serverThread_.joinable()) {
+            serverThread_.join();
+        }
+    }
+
+    const std::string& url() const { return url_; }
+
+private:
+    static std::string toLowerAscii(std::string s) {
+        for (char& c : s) {
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        }
+        return s;
+    }
+
+    static size_t parseContentLength(const std::string& headers) {
+        size_t pos = 0;
+        while (pos < headers.size()) {
+            size_t end = headers.find("\r\n", pos);
+            if (end == std::string::npos) {
+                end = headers.size();
+            }
+            std::string line = headers.substr(pos, end - pos);
+            size_t colon = line.find(':');
+            if (colon != std::string::npos && toLowerAscii(line.substr(0, colon)) == "content-length") {
+                try {
+                    return static_cast<size_t>(std::stoul(line.substr(colon + 1)));
+                } catch (...) {
+                    return 0;
+                }
+            }
+            pos = end + 2;
+        }
+        return 0;
+    }
+
+    static void handleClient(int clientFd) {
+        std::string req;
+        char buf[1024];
+        size_t headerEnd = std::string::npos;
+
+        while (true) {
+            ssize_t n = ::recv(clientFd, buf, sizeof(buf), 0);
+            if (n <= 0) {
+                ::close(clientFd);
+                return;
+            }
+            req.append(buf, static_cast<size_t>(n));
+            headerEnd = req.find("\r\n\r\n");
+            if (headerEnd != std::string::npos) {
+                headerEnd += 4;
+                break;
+            }
+        }
+
+        size_t contentLen = parseContentLength(req.substr(0, headerEnd));
+        while (req.size() < headerEnd + contentLen) {
+            ssize_t n = ::recv(clientFd, buf, sizeof(buf), 0);
+            if (n <= 0) {
+                break;
+            }
+            req.append(buf, static_cast<size_t>(n));
+        }
+
+        size_t bodyLen = std::min(contentLen, req.size() - headerEnd);
+        json parsed = json::parse(req.substr(headerEnd, bodyLen), nullptr, false);
+        json id = (parsed.is_object() && parsed.contains("id")) ? parsed["id"] : json(1);
+        std::string method = (parsed.is_object() && parsed.contains("method") && parsed["method"].is_string())
+            ? parsed["method"].get<std::string>()
+            : "";
+
+        json respBody;
+        if (method == "getAccountBalance" || method == "getLastBlockId") {
+            respBody = {{"jsonrpc", "2.0"}, {"id", id}, {"result", 0}};
+        } else {
+            respBody = {{"jsonrpc", "2.0"}, {"id", id}, {"error", {{"code", -32601}, {"message", "Method not mocked"}}}};
+        }
+
+        std::string bodyStr = respBody.dump();
+        std::string resp =
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/json\r\n"
+            "Content-Length: " + std::to_string(bodyStr.size()) + "\r\n"
+            "Connection: close\r\n\r\n" + bodyStr;
+
+        size_t sentTotal = 0;
+        while (sentTotal < resp.size()) {
+            ssize_t sent = ::send(clientFd, resp.data() + sentTotal, resp.size() - sentTotal, 0);
+            if (sent <= 0) {
+                break;
+            }
+            sentTotal += static_cast<size_t>(sent);
+        }
+        ::close(clientFd);
+    }
+
+    void serveLoop() {
+        while (running_) {
+            int clientFd = ::accept(listenFd_, nullptr, nullptr);
+            if (clientFd < 0) {
+                continue;
+            }
+            handleClient(clientFd);
+        }
+    }
+
+    int listenFd_{-1};
+    std::atomic<bool> running_{false};
+    std::string url_;
+    std::thread serverThread_;
+};
+
+void write_mock_wallet_config(const std::string& testDir) {
+    json cfg = {
+        {"sequencer", {{"sequencer_addr", g_mockRpcUrl}}},
+        {"seq_poll_timeout", "5s"},
+        {"seq_tx_poll_max_blocks", 5},
+        {"seq_poll_max_retries", 2},
+        {"seq_block_poll_max_amount", 10}
+    };
+    std::ofstream out(testDir + "/wallet_config.json");
+    assert(out.is_open());
+    out << cfg.dump(2);
+}
 
 // Global prompt capture for testing callbacks
 static std::string g_capturedPrompt;
@@ -76,6 +247,7 @@ void test_engine_lifecycle_and_accounts() {
 
     std::string testDir = "/tmp/test_wallet_core_" + std::to_string(time(nullptr)) + "_1";
     std::filesystem::create_directories(testDir);
+    write_mock_wallet_config(testDir);
 
     EWalletCoreImpl wallet;
     std::string initRes = wallet.initEngine(testDir, "testpass123");
@@ -92,13 +264,13 @@ void test_engine_lifecycle_and_accounts() {
     std::string gasRes = wallet.getGasLimit();
     auto gasJson = json::parse(gasRes);
     assert(gasJson["ok"] == true);
-    assert(gasJson["gas_limit"] == 34000);
+    assert(gasJson["gas_limit"] == 10000000);
 
     std::string setGasRes = wallet.setGasLimit("50000");
     auto setGasJson = json::parse(setGasRes);
     assert(setGasJson["ok"] == true);
     assert(json::parse(wallet.getGasLimit())["gas_limit"] == 50000);
-    assert(json::parse(wallet.setGasLimit("34000"))["ok"] == true);
+    assert(json::parse(wallet.setGasLimit("10000000"))["ok"] == true);
 
     // Create fresh wallet
     std::string createRes = wallet.createWallet("testpass123");
@@ -154,6 +326,7 @@ void test_dapp_provider_sessions() {
 
     std::string testDir = "/tmp/test_wallet_core_" + std::to_string(time(nullptr)) + "_2";
     std::filesystem::create_directories(testDir);
+    write_mock_wallet_config(testDir);
 
     EWalletCoreImpl wallet;
     assert(json::parse(wallet.initEngine(testDir, "testpass123"))["ok"] == true);
@@ -227,6 +400,7 @@ void test_transfers_and_approvals() {
 
     std::string testDir = "/tmp/test_wallet_core_" + std::to_string(time(nullptr)) + "_3";
     std::filesystem::create_directories(testDir);
+    write_mock_wallet_config(testDir);
 
     TestableWalletCore wallet;
     assert(json::parse(wallet.initEngine(testDir, "testpass123"))["ok"] == true);
@@ -318,6 +492,7 @@ void test_identity_contracts_and_names() {
 
     std::string testDir = "/tmp/test_wallet_core_" + std::to_string(time(nullptr)) + "_4";
     std::filesystem::create_directories(testDir);
+    write_mock_wallet_config(testDir);
 
     EWalletCoreImpl wallet;
     assert(json::parse(wallet.initEngine(testDir, "testpass123"))["ok"] == true);
@@ -479,7 +654,9 @@ void test_identity_contracts_and_names() {
 }
 
 int main() {
-    std::cout << "RUNNING CORE MODULE INTEGRATION TESTS\n";
+    MockRpcServer mockRpc;
+    g_mockRpcUrl = mockRpc.url();
+    std::cout << "RUNNING CORE MODULE INTEGRATION TESTS (mock RPC: " << g_mockRpcUrl << ")\n";
     test_uninitialized_guard();
     test_engine_lifecycle_and_accounts();
     test_dapp_provider_sessions();
