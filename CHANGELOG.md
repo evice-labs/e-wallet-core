@@ -2,6 +2,31 @@
 
 All notable changes to the Evice Wallet Core Module are documented in this file.
 
+## [v0.3.0] - 2026-11-28
+
+### LEZ v0.4.0 & SDK v0.3.0 Synchronization
+- **Vendored SDK `v0.3.0` Libraries (`lib/`):**
+  - Updated Linux shared library (`lib/x86_64-linux/libe_wallet_sdk.so`) built from `lez-wallet-sdk` `v0.3.0` (`rev 0eca403`), synced with `logos-execution-zone` `v0.4.0` and free of `libpcsclite` linkage.
+  - Updated macOS Apple Silicon library (`lib/aarch64-darwin/libe_wallet_sdk.dylib`) from `lez-wallet-sdk` `CI (macOS)` run `46037997043`.
+  - Synchronized generated C-ABI header (`lib/e_wallet_sdk.h`) including `e_wallet_get_gas_limit` and `e_wallet_get_transaction_status`.
+- **Module Version Bump:**
+  - Promoted module version in `metadata.json` from `0.2.4` to `0.3.0`.
+
+## [v0.2.4] - 2026-11-18
+
+### SDK Synchronization & Documentation
+- **Vendored SDK `v0.2.4` Libraries (`lib/`):**
+  - Updated Linux shared library (`lib/x86_64-linux/libe_wallet_sdk.so`, `651177d`) and macOS arm64 library (`lib/aarch64-darwin/libe_wallet_sdk.dylib`, `4b160a3`) from upstream SDK CI.
+  - Updated `README.md` and bumped module version in `metadata.json` from `0.2.3` to `0.2.4`.
+
+## [v0.2.3] - 2026-11-16
+
+### Deferred Approval Queue & Effect Simulation (PR #12)
+- **Thread-Safe Deferred Approval Queue (`wallet_approval`, `wallet_engine`, `e_wallet_core_impl`):**
+  - Registered `default_approval_callback` automatically on `init_engine` to queue deferred dApp approval prompts.
+  - Exposed `listPendingApprovals()` and cleaned up pending queue entries across decision, cancel, lock, and destroy lifecycles.
+  - Enriched `simulatePromptEffect()` with `dapp_name`, `effect`, `gas_fee`, `state_diff`, and `contract_call` support, updated `README.md`, and bumped `metadata.json` to `0.2.3` (`67fc6b0`).
+
 ## [v0.2.2] - 2026-11-11
 
 ### Cross-Platform Compatibility & Windows Support
